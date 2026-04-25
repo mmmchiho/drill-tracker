@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ドリル学習トラッカー</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; background: #f5f5f7; color: #1c1c1e; font-size: 16px; }
+  header { background: #fff; border-bottom: 0.5px solid #e0e0e0; padding: 14px 16px 0; position: sticky; top: 0; z-index: 100; }
+  header h1 { font-size: 17px; font-weight: 600; text-align: center; padding-bottom: 10px; }
+  .tabs { display: flex; }
+  .tab { flex: 1; padding: 10px 4px; font-size: 12px; text-align: center; cursor: pointer; color: #888; border-bottom: 2px solid transparent; background: none; border-top: none; border-left: none; border-right: none; }
+  .tab.active { color: #1c1c1e; border-bottom: 2px solid #1c1c1e; font-weight: 600; }
+  .section { display: none; padding: 16px; padding-bottom: 80px; }
+  .section.active { display: block; }
+  label.lbl { font-size: 12px; color: #666; display: block; margin-bottom: 4px; margin-top: 12px; }
+  input[type=text], input[type=date], select, textarea {
+    width: 100%; padding: 10px 12px; border: 0.5px solid #ccc; border-radius: 10px;
+    font-size: 15px; background: #fff; color: #1c1c1e; font-family: inherit; -webkit-appearance: none;
+  }
+  textarea { resize: vertical; min-height: 64px; }
+  .btn { width: 100%; padding: 13px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; margin-top: 12px; }
+  .btn-primary { background: #1c1c1e; color: #fff; }
+  .btn-secondary { background: #fff; border: 0.5px solid #ccc; color: #1c1c1e; }
+  .btn-danger { background: #fff; border: 0.5px solid #ff3b30; color: #ff3b30; }
+  .card { background: #fff; border-radius: 14px; padding: 14px; margin-bottom: 10px; border: 0.5px solid #e5e5e5; }
+  .card-row { display: flex; justify-content: space-between; align-items: flex-start; }
+  .drill-name { font-size: 14px; font-weight: 600; flex: 1; line-height: 1.4; }
+  .small-btn { font-size: 11px; color: #888; background: none; border: none; cursor: pointer; padding: 2px 6px; white-space: nowrap; }
+  .pages-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .pill { font-size: 12px; padding: 3px 10px; border-radius: 20px; }
+  .pill-blue { background: #e8f1fb; color: #1a5ca8; }
+  .pill-gray { background: #f0f0f0; color: #555; }
+  .badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; display: inline-block; margin-top: 6px; }
+  .badge-red { background: #ffe5e5; color: #c0392b; }
+  .badge-yellow { background: #fff3cd; color: #7d5a00; }
+  .badge-green { background: #e5f5ec; color: #1a7a3c; }
+  .meta { font-size: 11px; color: #999; margin-top: 6px; }
+  .memo { font-size: 12px; color: #666; margin-top: 8px; padding-top: 8px; border-top: 0.5px solid #eee; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .stat-box { background: #fff; border-radius: 12px; padding: 14px; text-align: center; border: 0.5px solid #e5e5e5; }
+  .stat-num { font-size: 26px; font-weight: 700; }
+  .stat-num.red { color: #c0392b; }
+  .stat-label { font-size: 11px; color: #888; margin-top: 2px; }
+  .filter-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .filter-row select { margin-bottom: 0; font-size: 13px; flex: 1; }
+  .empty { text-align: center; color: #aaa; font-size: 14px; padding: 40px 20px; }
+  .section-title { font-size: 12px; font-weight: 600; color: #888; margin: 16px 0 8px; letter-spacing: 0.3px; }
+  .divider { border: none; border-top: 0.5px solid #e0e0e0; margin: 20px 0; }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: flex-end; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: #fff; border-radius: 20px 20px 0 0; padding: 20px 16px 40px; width: 100%; }
+  .modal h2 { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+  .modal p { font-size: 13px; color: #666; margin-bottom: 12px; }
+  .log-date-header { font-size: 13px; font-weight: 600; color: #555; margin: 14px 0 6px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📚 ドリル学習トラッカー</h1>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('record')">記録する</button>
+    <button class="tab" onclick="switchTab('weak')">苦手リスト</button>
+    <button class="tab" onclick="switchTab('log')">学習ログ</button>
+    <button class="tab" onclick="switchTab('settings')">設定</button>
+  </div>
+</header>
+
+<!-- 記録する -->
+<div id="section-record" class="section active">
+  <div class="section-title">今日の学習ログ</div>
+  <label class="lbl">学習日</label>
+  <input type="date" id="log-date">
+  <label class="lbl">教材名</label>
+  <select id="log-drill"><option value="">-- 選択 --</option></select>
+  <label class="lbl">やったページ（カンマ区切り）</label>
+  <input type="text" id="log-pages" placeholder="例：1, 2, 3">
+  <label class="lbl">メモ（任意）</label>
+  <textarea id="log-memo" placeholder="例：時間の問題が得意になってきた"></textarea>
+  <button class="btn btn-secondary" onclick="saveLog()">学習ログを保存</button>
+
+  <hr class="divider">
+
+  <div class="section-title">苦手ページを記録</div>
+  <label class="lbl">教材名</label>
+  <select id="weak-drill"><option value="">-- 選択 --</option></select>
+  <label class="lbl">間違えたページ（カンマ区切り）</label>
+  <input type="text" id="weak-pages" placeholder="例：5, 8, 12">
+  <label class="lbl">メモ（任意）</label>
+  <textarea id="weak-memo" placeholder="例：数の多少が混乱しがち"></textarea>
+  <button class="btn btn-primary" onclick="saveWeak()">苦手を記録する（1ヶ月後にリマインド）</button>
+</div>
+
+<!-- 苦手リスト -->
+<div id="section-weak" class="section">
+  <div class="stats" id="stats-area"></div>
+  <div class="filter-row">
+    <select id="filter-drill" onchange="renderWeak()"><option value="">すべての教材</option></select>
+    <select id="filter-status" onchange="renderWeak()">
+      <option value="">すべて</option>
+      <option value="due">期日！</option>
+      <option value="soon">もうすぐ</option>
+    </select>
+  </div>
+  <div id="weak-list"></div>
+</div>
+
+<!-- 学習ログ -->
+<div id="section-log" class="section">
+  <div id="log-list"></div>
+</div>
+
+<!-- 設定 -->
+<div id="section-settings" class="section">
+  <div class="section-title">教材リストを管理</div>
+  <div id="drill-list-settings"></div>
+  <label class="lbl" style="margin-top:16px">新しい教材を追加</label>
+  <input type="text" id="new-drill-name" placeholder="例：こぐま会 ひとりでとっくん 6">
+  <button class="btn btn-secondary" onclick="addDrill()">追加する</button>
+
+  <hr class="divider">
+  <div class="section-title">データ管理</div>
+  <button class="btn btn-secondary" onclick="exportData()">データをエクスポート（JSON）</button>
+  <button class="btn btn-danger" style="margin-top:8px" onclick="clearAll()">すべてのデータを削除</button>
+</div>
+
+<!-- 削除確認モーダル -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2 id="modal-title">削除しますか？</h2>
+    <p id="modal-msg">この操作は取り消せません。</p>
+    <button class="btn btn-danger" id="modal-confirm">削除する</button>
+    <button class="btn btn-secondary" onclick="closeModal()">キャンセル</button>
+  </div>
+</div>
+
+<script>
+const DEFAULT_DRILLS = [
+  'ばっちりくんドリル【基礎編】93 条件推理',
+  'ばっちりくんドリル【基礎編】79 理科的常識(生き物)',
+  'ばっちりくんドリル【基礎編】81 理科的常識(植物)',
+  'ばっちりくんドリル【基礎編】83 理科的常識(自然・科学)',
+  '新版ばっちりくんドリル【基礎編】35 点図形①',
+  '新版ばっちりくんドリル【基礎編】73 重さの比較・重さの推理',
+  'ひとりでとっくん365日 01基礎1-A',
+  'ひとりでとっくん365日 02基礎1-B',
+  'ひとりでとっくん365日 03基礎2-A',
+  'ひとりでとっくん365日 04基礎2-B',
+];
+
+let drills = JSON.parse(localStorage.getItem('sj_drills') || 'null') || [...DEFAULT_DRILLS];
+let weaks  = JSON.parse(localStorage.getItem('sj_weaks')  || '[]');
+let logs   = JSON.parse(localStorage.getItem('sj_logs')   || '[]');
+
+function save() {
+  localStorage.setItem('sj_drills', JSON.stringify(drills));
+  localStorage.setItem('sj_weaks',  JSON.stringify(weaks));
+  localStorage.setItem('sj_logs',   JSON.stringify(logs));
+}
+
+function populateSelects() {
+  ['log-drill','weak-drill'].forEach(id => {
+    const s = document.getElementById(id);
+    const cur = s.value;
+    s.innerHTML = '<option value="">-- 選択 --</option>' + drills.map(d => `<option${d===cur?' selected':''}>${d}</option>`).join('');
+  });
+}
+
+function renderDrillSettings() {
+  document.getElementById('drill-list-settings').innerHTML = drills.length
+    ? drills.map((d,i) => `
+      <div class="card" style="display:flex;align-items:center;gap:8px;padding:10px 12px;margin-bottom:8px;">
+        <span style="flex:1;font-size:13px;line-height:1.4">${d}</span>
+        <button class="small-btn" style="color:#ff3b30" onclick="removeDrill(${i})">削除</button>
+      </div>`).join('')
+    : '<div class="empty">教材が登録されていません</div>';
+}
+
+function addDrill() {
+  const name = document.getElementById('new-drill-name').value.trim();
+  if (!name) { alert('教材名を入力してください'); return; }
+  if (drills.includes(name)) { alert('すでに登録されています'); return; }
+  drills.push(name);
+  save();
+  document.getElementById('new-drill-name').value = '';
+  populateSelects();
+  renderDrillSettings();
+  alert('「' + name + '」を追加しました！');
+}
+
+function removeDrill(i) {
+  openModal('教材を削除しますか？', '「' + drills[i] + '」をリストから削除します。', () => {
+    drills.splice(i, 1);
+    save();
+    populateSelects();
+    renderDrillSettings();
+  });
+}
+
+function saveWeak() {
+  const drill = document.getElementById('weak-drill').value;
+  const pages = document.getElementById('weak-pages').value.trim();
+  const memo  = document.getElementById('weak-memo').value.trim();
+  if (!drill) { alert('教材名を選んでください'); return; }
+  if (!pages) { alert('ページを入力してください'); return; }
+  const today  = new Date();
+  const remind = new Date(today);
+  remind.setMonth(remind.getMonth() + 1);
+  weaks.unshift({ id: Date.now(), drill, pages, memo, date: today.toISOString(), remindDate: remind.toISOString() });
+  save();
+  document.getElementById('weak-pages').value = '';
+  document.getElementById('weak-memo').value  = '';
+  document.getElementById('weak-drill').value = '';
+  alert('記録しました！\n1ヶ月後（' + fmt(remind) + '）にリマインダーを設定しました。');
+}
+
+function saveLog() {
+  const date  = document.getElementById('log-date').value;
+  const drill = document.getElementById('log-drill').value;
+  const pages = document.getElementById('log-pages').value.trim();
+  const memo  = document.getElementById('log-memo').value.trim();
+  if (!drill) { alert('教材名を選んでください'); return; }
+  logs.unshift({ id: Date.now(), date, drill, pages, memo });
+  save();
+  document.getElementById('log-drill').value = '';
+  document.getElementById('log-pages').value = '';
+  document.getElementById('log-memo').value  = '';
+  alert('学習ログを保存しました！');
+}
+
+function daysDiff(str) {
+  return Math.ceil((new Date(str) - new Date()) / 86400000);
+}
+function fmt(d) {
+  const dt = new Date(d);
+  return dt.getFullYear() + '/' + (dt.getMonth()+1) + '/' + dt.getDate();
+}
+
+function renderWeak() {
+  const fd = document.getElementById('filter-drill').value;
+  const fs = document.getElementById('filter-status').value;
+
+  const drillNames = [...new Set(weaks.map(w => w.drill))];
+  const sel = document.getElementById('filter-drill');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">すべての教材</option>' + drillNames.map(n => `<option${n===cur?' selected':''}>${n}</option>`).join('');
+
+  const dueCount = weaks.filter(w => daysDiff(w.remindDate) <= 0).length;
+  document.getElementById('stats-area').innerHTML =
+    '<div class="stat-box"><div class="stat-num">' + weaks.length + '</div><div class="stat-label">苦手記録</div></div>' +
+    '<div class="stat-box"><div class="stat-num red">' + dueCount + '</div><div class="stat-label">復習期日</div></div>';
+
+  let list = weaks;
+  if (fd) list = list.filter(w => w.drill === fd);
+  if (fs === 'due')  list = list.filter(w => daysDiff(w.remindDate) <= 0);
+  if (fs === 'soon') list = list.filter(w => { const d = daysDiff(w.remindDate); return d > 0 && d <= 7; });
+
+  if (!list.length) { document.getElementById('weak-list').innerHTML = '<div class="empty">記録がありません</div>'; return; }
+
+  document.getElementById('weak-list').innerHTML = list.map(w => {
+    const d = daysDiff(w.remindDate);
+    const badge = d <= 0
+      ? '<span class="badge badge-red">復習してね！（' + fmt(w.remindDate) + '）</span>'
+      : d <= 7
+      ? '<span class="badge badge-yellow">あと' + d + '日でリマインダー</span>'
+      : '<span class="badge badge-green">' + fmt(w.remindDate) + 'に復習</span>';
+    const pages = w.pages.split(',').map(p => '<span class="pill pill-blue">p.' + p.trim() + '</span>').join('');
+    return '<div class="card">' +
+      '<div class="card-row"><div class="drill-name">' + w.drill + '</div>' +
+      '<button class="small-btn" style="color:#ff3b30" onclick="deleteWeak(' + w.id + ')">削除</button></div>' +
+      '<div class="pages-wrap">' + pages + '</div>' +
+      badge +
+      '<div class="meta">記録日：' + fmt(w.date) + '</div>' +
+      (w.memo ? '<div class="memo">' + w.memo + '</div>' : '') +
+      '</div>';
+  }).join('');
+}
+
+function renderLog() {
+  if (!logs.length) { document.getElementById('log-list').innerHTML = '<div class="empty">学習ログがありません</div>'; return; }
+  const grouped = {};
+  logs.forEach(l => { const k = l.date || '日付未設定'; if (!grouped[k]) grouped[k] = []; grouped[k].push(l); });
+  document.getElementById('log-list').innerHTML = Object.entries(grouped)
+    .sort((a,b) => b[0].localeCompare(a[0]))
+    .map(([date, items]) => {
+      const parts = date.split('-');
+      const header = '<div class="log-date-header">' + parts[0] + '年' + parseInt(parts[1]) + '月' + parseInt(parts[2]) + '日</div>';
+      const cards = items.map(l =>
+        '<div class="card">' +
+        '<div class="card-row"><div class="drill-name">' + l.drill + '</div>' +
+        '<button class="small-btn" style="color:#ff3b30" onclick="deleteLog(' + l.id + ')">削除</button></div>' +
+        (l.pages ? '<div class="pages-wrap">' + l.pages.split(',').map(p => '<span class="pill pill-gray">p.' + p.trim() + '</span>').join('') + '</div>' : '') +
+        (l.memo ? '<div class="memo">' + l.memo + '</div>' : '') +
+        '</div>'
+      ).join('');
+      return header + cards;
+    }).join('');
+}
+
+function deleteWeak(id) {
+  openModal('削除しますか？', 'この苦手記録を削除します。', () => {
+    weaks = weaks.filter(w => w.id !== id); save(); renderWeak();
+  });
+}
+function deleteLog(id) {
+  openModal('削除しますか？', 'このログを削除します。', () => {
+    logs = logs.filter(l => l.id !== id); save(); renderLog();
+  });
+}
+
+let modalCallback = null;
+function openModal(title, msg, cb) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-msg').textContent   = msg;
+  modalCallback = cb;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+document.getElementById('modal-confirm').onclick = () => { if (modalCallback) modalCallback(); closeModal(); };
+
+function exportData() {
+  const blob = new Blob([JSON.stringify({drills, weaks, logs}, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'drill-tracker-backup.json';
+  a.click();
+}
+function clearAll() {
+  openModal('全データを削除しますか？', 'すべての記録が消えます。この操作は取り消せません。', () => {
+    weaks = []; logs = []; drills = [...DEFAULT_DRILLS]; save(); init();
+    alert('削除しました。');
+  });
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['record','weak','log','settings'][i] === tab));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('section-' + tab).classList.add('active');
+  if (tab === 'weak') renderWeak();
+  if (tab === 'log') renderLog();
+  if (tab === 'settings') renderDrillSettings();
+}
+
+function init() {
+  document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
+  populateSelects();
+}
+
+init();
+</script>
+</body>
+</html>
