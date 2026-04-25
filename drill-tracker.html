@@ -151,6 +151,7 @@ const DEFAULT_DRILLS = [
 ];
 
 let drills = JSON.parse(localStorage.getItem('sj_drills') || 'null') || [...DEFAULT_DRILLS];
+drills.sort((a, b) => a.localeCompare(b, 'ja'));
 let weaks  = JSON.parse(localStorage.getItem('sj_weaks')  || '[]');
 let logs   = JSON.parse(localStorage.getItem('sj_logs')   || '[]');
 
@@ -183,6 +184,7 @@ function addDrill() {
   if (!name) { alert('教材名を入力してください'); return; }
   if (drills.includes(name)) { alert('すでに登録されています'); return; }
   drills.push(name);
+  drills.sort((a, b) => a.localeCompare(b, 'ja'));
   save();
   document.getElementById('new-drill-name').value = '';
   populateSelects();
