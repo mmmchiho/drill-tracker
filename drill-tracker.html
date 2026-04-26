@@ -29,7 +29,7 @@
   .drill-name { font-size: 12px; font-weight: 600; flex: 1; line-height: 1.4; }
   .small-btn { font-size: 11px; color: #888; background: none; border: none; cursor: pointer; padding: 2px 6px; white-space: nowrap; }
   .pages-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-  .pill { font-size: 12px; padding: 3px 10px; border-radius: 20px; }
+  .pill { font-size: 11px; padding: 3px 10px; border-radius: 20px; }
   .pill-blue { background: #e8f1fb; color: #1a5ca8; }
   .pill-gray { background: #f0f0f0; color: #555; }
   .badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; display: inline-block; margin-top: 6px; }
@@ -37,7 +37,7 @@
   .badge-yellow { background: #fff3cd; color: #7d5a00; }
   .badge-green { background: #e5f5ec; color: #1a7a3c; }
   .meta { font-size: 11px; color: #999; margin-top: 6px; }
-  .memo { font-size: 12px; color: #666; margin-top: 8px; padding-top: 8px; border-top: 0.5px solid #eee; }
+  .memo { font-size: 11px; color: #666; margin-top: 8px; padding-top: 8px; border-top: 0.5px solid #eee; }
   .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
   .stat-box { background: #fff; border-radius: 12px; padding: 14px; text-align: center; border: 0.5px solid #e5e5e5; }
   .stat-num { font-size: 26px; font-weight: 700; }
@@ -300,9 +300,9 @@ function renderWeak() {
       '<button class="small-btn" style="color:#ff3b30" onclick="deleteWeak(' + w.id + ')">削除</button></div>' +
       '<div class="pages-wrap">' + pages + '</div>' +
       badge +
-      (isDone ? '' : ' <button class="small-btn" style="color:#555" onclick="openRemindModal(' + w.id + ')">📅 日付変更</button>') +
+      (isDone ? '' : ' <span class="meta" style="font-size:11px">　📅 <button class="small-btn" style="color:#555;font-size:11px;padding:0" onclick="openRemindModal(' + w.id + ')">日付変更</button>　記録日：' + fmt(w.date) + '</span>') +
+      (isDone ? '<div class="meta" style="font-size:11px">記録日：' + fmt(w.date) + '</div>' : '') +
       '<div style="margin-top:6px">' + doneBtn + '</div>' +
-      '<div class="meta">記録日：' + fmt(w.date) + '</div>' +
       (w.memo ? '<div class="memo">' + w.memo + '</div>' : '') +
       '</div>';
   }
@@ -356,14 +356,14 @@ function renderLog() {
           return '<div class="card">' +
             '<div class="card-row"><div style="flex:1"></div>' +
             '<button class="small-btn" style="color:#ff3b30" onclick="deleteLog(' + l.id + ')">削除</button></div>' +
-            '<div style="font-size:14px;line-height:1.8;white-space:pre-wrap;margin-top:4px">' + l.content + '</div>' +
+            '<div style="font-size:11px;line-height:1.8;white-space:pre-wrap;margin-top:4px">' + l.content + '</div>' +
             '</div>';
         }
         const drillPart = l.drill
-          ? '<div style="font-size:12px;color:#555;line-height:1.4">' + l.drill + '</div>' +
+          ? '<div style="font-size:11px;color:#555;line-height:1.4">' + l.drill + '</div>' +
             (l.pages ? '<div class="pages-wrap">' + l.pages.split(',').map(p => '<span class="pill pill-gray">p.' + p.trim() + '</span>').join('') + '</div>' : '')
           : '';
-        const freePart = l.free ? '<div style="font-size:12px;color:#555;margin-top:6px">' + l.free + '</div>' : '';
+        const freePart = l.free ? '<div style="font-size:11px;color:#555;margin-top:6px">' + l.free + '</div>' : '';
         const memoPart = l.memo ? '<div class="memo">' + l.memo + '</div>' : '';
         return '<div class="card">' +
           '<div class="card-row"><div style="flex:1"></div>' +
