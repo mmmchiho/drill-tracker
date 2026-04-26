@@ -319,10 +319,10 @@ function renderLog() {
             '</div>';
         }
         const drillPart = l.drill
-          ? '<div style="font-size:14px;font-weight:600;line-height:1.4">' + l.drill + '</div>' +
+          ? '<div style="font-size:13px;color:#555;line-height:1.4">' + l.drill + '</div>' +
             (l.pages ? '<div class="pages-wrap">' + l.pages.split(',').map(p => '<span class="pill pill-gray">p.' + p.trim() + '</span>').join('') + '</div>' : '')
           : '';
-        const freePart = l.free ? '<div style="font-size:14px;color:#1c1c1e;margin-top:6px">📝 ' + l.free + '</div>' : '';
+        const freePart = l.free ? '<div style="font-size:13px;color:#555;margin-top:6px">' + l.free + '</div>' : '';
         const memoPart = l.memo ? '<div class="memo">' + l.memo + '</div>' : '';
         return '<div class="card">' +
           '<div class="card-row"><div style="flex:1"></div>' +
