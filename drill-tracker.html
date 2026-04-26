@@ -176,9 +176,12 @@ function save() {
 }
 
 function populateSelects() {
-  const s = document.getElementById('weak-drill');
-  const cur = s.value;
-  s.innerHTML = '<option value="">-- 選択 --</option>' + drills.map(d => `<option${d===cur?' selected':''}>${d}</option>`).join('');
+  ['log-drill', 'weak-drill'].forEach(id => {
+    const s = document.getElementById(id);
+    if (!s) return;
+    const cur = s.value;
+    s.innerHTML = '<option value="">-- 選択 --</option>' + drills.map(d => `<option${d===cur?' selected':''}>${d}</option>`).join('');
+  });
 }
 
 function renderDrillSettings() {
@@ -316,7 +319,7 @@ function renderLog() {
             '</div>';
         }
         const drillPart = l.drill
-          ? '<div class="drill-name">' + l.drill + '</div>' +
+          ? '<div style="font-size:13px;color:#555;line-height:1.4">' + l.drill + '</div>' +
             (l.pages ? '<div class="pages-wrap">' + l.pages.split(',').map(p => '<span class="pill pill-gray">p.' + p.trim() + '</span>').join('') + '</div>' : '')
           : '';
         const freePart = l.free ? '<div style="font-size:13px;color:#555;margin-top:6px">📝 ' + l.free + '</div>' : '';
