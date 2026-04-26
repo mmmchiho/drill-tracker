@@ -296,7 +296,7 @@ function renderWeak() {
       ? '<button class="small-btn" style="color:#1a7a3c" onclick="undoDone(' + w.id + ')">↩️ 戻す</button>'
       : '<button class="small-btn" style="color:#1a7a3c" onclick="markDone(' + w.id + ')">✅ 完了</button>';
     return '<div class="card' + (isDone ? ' card-done' : '') + '">' +
-      '<div class="card-row"><div class="drill-name">' + w.drill + '</div>' +
+      '<div class="card-row"><div style="font-size:11px;font-weight:600;flex:1;line-height:1.4">' + w.drill + '</div>' +
       '<button class="small-btn" style="color:#ff3b30" onclick="deleteWeak(' + w.id + ')">削除</button></div>' +
       '<div class="pages-wrap">' + pages + '</div>' +
       badge +
