@@ -26,7 +26,7 @@
   .btn-danger { background: #fff; border: 0.5px solid #ff3b30; color: #ff3b30; }
   .card { background: #fff; border-radius: 14px; padding: 14px; margin-bottom: 10px; border: 0.5px solid #e5e5e5; }
   .card-row { display: flex; justify-content: space-between; align-items: flex-start; }
-  .drill-name { font-size: 14px; font-weight: 600; flex: 1; line-height: 1.4; }
+  .drill-name { font-size: 12px; font-weight: 600; flex: 1; line-height: 1.4; }
   .small-btn { font-size: 11px; color: #888; background: none; border: none; cursor: pointer; padding: 2px 6px; white-space: nowrap; }
   .pages-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
   .pill { font-size: 12px; padding: 3px 10px; border-radius: 20px; }
@@ -54,6 +54,8 @@
   .modal h2 { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
   .modal p { font-size: 13px; color: #666; margin-bottom: 12px; }
   .log-date-header { font-size: 13px; font-weight: 600; color: #555; margin: 14px 0 6px; }
+  .card-done { opacity: 0.45; background: #f5f5f7; }
+  .done-toggle { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 6px 0; width: 100%; text-align: center; margin-top: 4px; }
 </style>
 </head>
 <body>
@@ -263,41 +265,80 @@ function renderWeak() {
   const fd = document.getElementById('filter-drill').value;
   const fs = document.getElementById('filter-status').value;
 
-  const drillNames = [...new Set(weaks.map(w => w.drill))];
+  const activeWeaks = weaks.filter(w => !w.done);
+  const drillNames = [...new Set(activeWeaks.map(w => w.drill))];
   const sel = document.getElementById('filter-drill');
   const cur = sel.value;
   sel.innerHTML = '<option value="">すべての教材</option>' + drillNames.map(n => `<option${n===cur?' selected':''}>${n}</option>`).join('');
 
-  const dueCount = weaks.filter(w => daysDiff(w.remindDate) <= 0).length;
+  const dueCount = activeWeaks.filter(w => daysDiff(w.remindDate) <= 0).length;
   document.getElementById('stats-area').innerHTML =
-    '<div class="stat-box"><div class="stat-num">' + weaks.length + '</div><div class="stat-label">苦手記録</div></div>' +
+    '<div class="stat-box"><div class="stat-num">' + activeWeaks.length + '</div><div class="stat-label">苦手記録</div></div>' +
     '<div class="stat-box"><div class="stat-num red">' + dueCount + '</div><div class="stat-label">復習期日</div></div>';
 
-  let list = weaks;
+  // アクティブリスト：期限が近い順にソート
+  let list = activeWeaks.slice().sort((a, b) => new Date(a.remindDate) - new Date(b.remindDate));
   if (fd) list = list.filter(w => w.drill === fd);
   if (fs === 'due')  list = list.filter(w => daysDiff(w.remindDate) <= 0);
   if (fs === 'soon') list = list.filter(w => { const d = daysDiff(w.remindDate); return d > 0 && d <= 7; });
 
-  if (!list.length) { document.getElementById('weak-list').innerHTML = '<div class="empty">記録がありません</div>'; return; }
-
-  document.getElementById('weak-list').innerHTML = list.map(w => {
+  function makeCard(w, isDone) {
     const d = daysDiff(w.remindDate);
-    const badge = d <= 0
+    const badge = isDone
+      ? '<span class="badge" style="background:#e8e8e8;color:#888">✅ 完了済み（' + fmt(w.remindDate) + '）</span>'
+      : d <= 0
       ? '<span class="badge badge-red">復習してね！（' + fmt(w.remindDate) + '）</span>'
       : d <= 7
       ? '<span class="badge badge-yellow">あと' + d + '日でリマインダー</span>'
       : '<span class="badge badge-green">' + fmt(w.remindDate) + 'に復習</span>';
     const pages = w.pages.split(',').map(p => '<span class="pill pill-blue">p.' + p.trim() + '</span>').join('');
-    return '<div class="card">' +
+    const doneBtn = isDone
+      ? '<button class="small-btn" style="color:#1a7a3c" onclick="undoDone(' + w.id + ')">↩️ 戻す</button>'
+      : '<button class="small-btn" style="color:#1a7a3c" onclick="markDone(' + w.id + ')">✅ 完了</button>';
+    return '<div class="card' + (isDone ? ' card-done' : '') + '">' +
       '<div class="card-row"><div class="drill-name">' + w.drill + '</div>' +
       '<button class="small-btn" style="color:#ff3b30" onclick="deleteWeak(' + w.id + ')">削除</button></div>' +
       '<div class="pages-wrap">' + pages + '</div>' +
       badge +
-      ' <button class="small-btn" style="color:#555;margin-top:4px" onclick="openRemindModal(' + w.id + ')">📅 日付変更</button>' +
+      (isDone ? '' : ' <button class="small-btn" style="color:#555" onclick="openRemindModal(' + w.id + ')">📅 日付変更</button>') +
+      '<div style="margin-top:6px">' + doneBtn + '</div>' +
       '<div class="meta">記録日：' + fmt(w.date) + '</div>' +
       (w.memo ? '<div class="memo">' + w.memo + '</div>' : '') +
       '</div>';
-  }).join('');
+  }
+
+  const activeHtml = list.length
+    ? list.map(w => makeCard(w, false)).join('')
+    : '<div class="empty">記録がありません</div>';
+
+  // 完了リスト
+  const doneList = weaks.filter(w => w.done);
+  const doneHtml = doneList.length
+    ? '<button class="done-toggle" onclick="toggleDoneList()">✅ 完了済み ' + doneList.length + '件 ▼</button>' +
+      '<div id="done-list" style="display:none">' + doneList.map(w => makeCard(w, true)).join('') + '</div>'
+    : '';
+
+  document.getElementById('weak-list').innerHTML = activeHtml + doneHtml;
+}
+
+function markDone(id) {
+  const w = weaks.find(w => w.id === id);
+  if (w) { w.done = true; save(); renderWeak(); }
+}
+function undoDone(id) {
+  const w = weaks.find(w => w.id === id);
+  if (w) { w.done = false; save(); renderWeak(); }
+}
+function toggleDoneList() {
+  const el = document.getElementById('done-list');
+  const btn = el.previousElementSibling;
+  if (el.style.display === 'none') {
+    el.style.display = 'block';
+    btn.textContent = btn.textContent.replace('▼', '▲');
+  } else {
+    el.style.display = 'none';
+    btn.textContent = btn.textContent.replace('▲', '▼');
+  }
 }
 
 function renderLog() {
