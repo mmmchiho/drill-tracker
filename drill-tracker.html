@@ -113,7 +113,14 @@
 
 <!-- 学習ログ -->
 <div id="section-log" class="section">
-  <div id="log-list"></div>
+  <div id="log-view">
+    <button class="btn btn-secondary" style="margin-bottom:12px;font-size:12px;padding:9px" onclick="showProgress()">📊 進捗を確認する →</button>
+    <div id="log-list"></div>
+  </div>
+  <div id="progress-view" style="display:none">
+    <button class="btn btn-secondary" style="margin-bottom:12px;font-size:12px;padding:9px" onclick="hideProgress()">← 学習ログに戻る</button>
+    <div id="progress-list"></div>
+  </div>
 </div>
 
 <!-- 設定 -->
@@ -187,11 +194,21 @@ function populateSelects() {
 }
 
 function renderDrillSettings() {
+  let drillPages = JSON.parse(localStorage.getItem('sj_drillPages') || '{}');
   document.getElementById('drill-list-settings').innerHTML = drills.length
     ? drills.map((d,i) => `
-      <div class="card" style="display:flex;align-items:center;gap:8px;padding:10px 12px;margin-bottom:8px;">
-        <span style="flex:1;font-size:13px;line-height:1.4">${d}</span>
-        <button class="small-btn" style="color:#ff3b30" onclick="removeDrill(${i})">削除</button>
+      <div class="card" style="padding:10px 12px;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="flex:1;font-size:11px;line-height:1.4">${d}</span>
+          <button class="small-btn" style="color:#ff3b30" onclick="removeDrill(${i})">削除</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+          <span style="font-size:11px;color:#888;white-space:nowrap">総ページ数：</span>
+          <input type="number" min="1" max="200" value="${drillPages[d]||''}" placeholder="例：32"
+            style="width:80px;padding:5px 8px;font-size:12px;border:0.5px solid #ccc;border-radius:8px;"
+            onchange="saveDrillPages('${d.replace(/'/g,"\'")}', this.value)">
+          <span style="font-size:11px;color:#888">ページ</span>
+        </div>
       </div>`).join('')
     : '<div class="empty">教材が登録されていません</div>';
 }
@@ -296,7 +313,7 @@ function renderWeak() {
       ? '<button class="small-btn" style="color:#1a7a3c" onclick="undoDone(' + w.id + ')">↩️ 戻す</button>'
       : '<button class="small-btn" style="color:#1a7a3c" onclick="markDone(' + w.id + ')">✅ 完了</button>';
     return '<div class="card' + (isDone ? ' card-done' : '') + '">' +
-      '<div class="card-row"><div style="font-size:11px;font-weight:600;flex:1;line-height:1.4">' + w.drill + '</div>' +
+      '<div class="card-row"><div class="drill-name">' + w.drill + '</div>' +
       '<button class="small-btn" style="color:#ff3b30" onclick="deleteWeak(' + w.id + ')">削除</button></div>' +
       '<div class="pages-wrap">' + pages + '</div>' +
       badge +
@@ -395,6 +412,76 @@ function openModal(title, msg, cb) {
 }
 function closeModal() { document.getElementById('modal').classList.remove('open'); }
 document.getElementById('modal-confirm').onclick = () => { if (modalCallback) modalCallback(); closeModal(); };
+
+function saveDrillPages(drillName, val) {
+  let drillPages = JSON.parse(localStorage.getItem('sj_drillPages') || '{}');
+  if (val && parseInt(val) > 0) {
+    drillPages[drillName] = parseInt(val);
+  } else {
+    delete drillPages[drillName];
+  }
+  localStorage.setItem('sj_drillPages', JSON.stringify(drillPages));
+}
+
+function showProgress() {
+  document.getElementById('log-view').style.display = 'none';
+  document.getElementById('progress-view').style.display = 'block';
+  renderProgress();
+}
+
+function hideProgress() {
+  document.getElementById('progress-view').style.display = 'none';
+  document.getElementById('log-view').style.display = 'block';
+}
+
+function renderProgress() {
+  const drillPages = JSON.parse(localStorage.getItem('sj_drillPages') || '{}');
+
+  // 学習ログからドリルごとのやったページを集計
+  const done = {};
+  logs.forEach(l => {
+    if (!l.drill || !l.pages) return;
+    if (!done[l.drill]) done[l.drill] = new Set();
+    l.pages.split(',').forEach(p => {
+      const n = parseInt(p.trim());
+      if (!isNaN(n)) done[l.drill].add(n);
+    });
+  });
+
+  const items = drills.filter(d => drillPages[d]).map(d => {
+    const total = drillPages[d];
+    const donePages = done[d] ? [...done[d]].sort((a,b)=>a-b) : [];
+    const doneCount = donePages.length;
+    const pct = Math.round(doneCount / total * 100);
+    const barFilled = Math.round(pct / 5);
+    const bar = '█'.repeat(barFilled) + '░'.repeat(20 - barFilled);
+
+    // 未着手ページ
+    const allPages = Array.from({length: total}, (_,i) => i+1);
+    const notDone = allPages.filter(p => !done[d] || !done[d].has(p));
+    const notDoneText = notDone.length > 0
+      ? notDone.map(p => 'p.' + p).join('、')
+      : 'すべて完了！🎉';
+
+    return `<div class="card" style="margin-bottom:10px">
+      <div style="font-size:11px;font-weight:600;line-height:1.4;margin-bottom:6px">${d}</div>
+      <div style="font-size:11px;color:#555;font-family:monospace;letter-spacing:1px">${bar}</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">${doneCount}/${total}ページ完了（${pct}%）</div>
+      <div style="font-size:11px;color:#c0392b;margin-top:6px;line-height:1.6">
+        <span style="color:#888">未着手：</span>${notDoneText}
+      </div>
+    </div>`;
+  });
+
+  const unset = drills.filter(d => !drillPages[d]);
+  const unsetHtml = unset.length
+    ? `<div style="font-size:11px;color:#aaa;margin-top:12px;text-align:center">※ 設定タブで総ページ数を入力すると進捗が表示されます</div>`
+    : '';
+
+  document.getElementById('progress-list').innerHTML = items.length
+    ? items.join('') + unsetHtml
+    : '<div class="empty">設定タブで各ドリルの総ページ数を入力してください</div>';
+}
 
 function exportData() {
   const blob = new Blob([JSON.stringify({drills, weaks, logs}, null, 2)], {type:'application/json'});
