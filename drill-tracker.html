@@ -448,6 +448,20 @@ function renderProgress() {
     });
   });
 
+  // 苦手リストからドリルごとの苦手ページを集計（完了済み除く）
+  const weakMap = {};
+  weaks.filter(w => !w.done).forEach(w => {
+    if (!w.drill || !w.pages) return;
+    if (!weakMap[w.drill]) weakMap[w.drill] = new Set();
+    w.pages.split(',').forEach(p => {
+      const n = parseInt(p.trim());
+      if (!isNaN(n)) weakMap[w.drill].add(n);
+    });
+  });
+
+  const pillStyle = (color, bg) =>
+    `style="font-size:10px;padding:2px 8px;border-radius:20px;background:${bg};color:${color};display:inline-block;margin:2px 2px"`;
+
   const items = drills.filter(d => drillPages[d]).map(d => {
     const total = drillPages[d];
     const donePages = done[d] ? [...done[d]].sort((a,b)=>a-b) : [];
@@ -456,20 +470,32 @@ function renderProgress() {
     const barFilled = Math.round(pct / 5);
     const bar = '█'.repeat(barFilled) + '░'.repeat(20 - barFilled);
 
-    // 未着手ページ
     const allPages = Array.from({length: total}, (_,i) => i+1);
+
+    // 未着手ページ（やっていない）
     const notDone = allPages.filter(p => !done[d] || !done[d].has(p));
-    const notDoneText = notDone.length > 0
-      ? notDone.map(p => 'p.' + p).join('、')
-      : 'すべて完了！🎉';
+    // 苦手が残っているページ（やったけど苦手未完了）
+    const weakPages = weakMap[d]
+      ? allPages.filter(p => done[d] && done[d].has(p) && weakMap[d].has(p))
+      : [];
+
+    const notDonePills = notDone.length > 0
+      ? notDone.map(p => `<span ${pillStyle('#555','#f0f0f0')}>p.${p}</span>`).join('')
+      : '<span style="font-size:10px;color:#1a7a3c">すべて着手済み🎉</span>';
+
+    const weakPills = weakPages.length > 0
+      ? weakPages.map(p => `<span ${pillStyle('#c0392b','#ffe5e5')}>p.${p}</span>`).join('')
+      : '';
 
     return `<div class="card" style="margin-bottom:10px">
       <div style="font-size:11px;font-weight:600;line-height:1.4;margin-bottom:6px">${d}</div>
       <div style="font-size:11px;color:#555;font-family:monospace;letter-spacing:1px">${bar}</div>
-      <div style="font-size:11px;color:#888;margin-top:4px">${doneCount}/${total}ページ完了（${pct}%）</div>
-      <div style="font-size:11px;color:#c0392b;margin-top:6px;line-height:1.6">
-        <span style="color:#888">未着手：</span>${notDoneText}
-      </div>
+      <div style="font-size:11px;color:#888;margin-top:4px;margin-bottom:6px">${doneCount}/${total}ページ完了（${pct}%）</div>
+      <div style="font-size:10px;color:#888;margin-bottom:4px">未着手</div>
+      <div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:${weakPages.length>0?'8px':'0'}">${notDonePills}</div>
+      ${weakPages.length > 0 ? `
+      <div style="font-size:10px;color:#c0392b;margin-bottom:4px;margin-top:4px">苦手が残っているページ</div>
+      <div style="display:flex;flex-wrap:wrap;gap:2px">${weakPills}</div>` : ''}
     </div>`;
   });
 
