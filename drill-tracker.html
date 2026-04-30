@@ -487,15 +487,19 @@ function renderProgress() {
       ? weakPages.map(p => `<span ${pillStyle('#c0392b','#ffe5e5')}>p.${p}</span>`).join('')
       : '';
 
+    // 完了率：やったページ数 ÷（総ページ数）で計算、苦手未完了は完了扱いしない
+    const trulyDone = donePages.filter(p => !weakMap[d] || !weakMap[d].has(p));
+    const trulyDoneCount = trulyDone.length;
+    const trulyPct = Math.round(trulyDoneCount / total * 100);
+    const trulyBarFilled = Math.round(trulyPct / 5);
+    const trulyBar = '█'.repeat(trulyBarFilled) + '░'.repeat(20 - trulyBarFilled);
+
     return `<div class="card" style="margin-bottom:10px">
       <div style="font-size:11px;font-weight:600;line-height:1.4;margin-bottom:6px">${d}</div>
-      <div style="font-size:11px;color:#555;font-family:monospace;letter-spacing:1px">${bar}</div>
-      <div style="font-size:11px;color:#888;margin-top:4px;margin-bottom:6px">${doneCount}/${total}ページ完了（${pct}%）</div>
-      <div style="font-size:10px;color:#888;margin-bottom:4px">未着手</div>
-      <div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:${weakPages.length>0?'8px':'0'}">${notDonePills}</div>
-      ${weakPages.length > 0 ? `
-      <div style="font-size:10px;color:#c0392b;margin-bottom:4px;margin-top:4px">苦手が残っているページ</div>
-      <div style="display:flex;flex-wrap:wrap;gap:2px">${weakPills}</div>` : ''}
+      <div style="font-size:10px;color:#555;font-family:monospace;letter-spacing:1px">${trulyBar}</div>
+      <div style="font-size:10px;color:#888;margin-top:3px;margin-bottom:6px">${trulyDoneCount}/${total}ページ完了（${trulyPct}%）</div>
+      <div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:${weakPages.length>0?'6px':'0'}">${notDonePills}</div>
+      ${weakPages.length > 0 ? `<div style="display:flex;flex-wrap:wrap;gap:2px;margin-top:2px">${weakPills}</div>` : ''}
     </div>`;
   });
 
