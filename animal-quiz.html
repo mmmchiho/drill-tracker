@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>どうぶつ なかまわけクイズ</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Yomogi&family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap');
+
+:root {
+  --mammal:  #FF9A3C;
+  --bird:    #4BBDFF;
+  --fish:    #00C9A7;
+  --insect:  #A78BFA;
+  --other:   #F87171;
+  --bg:      #F0FDF4;
+  --text:    #1a2e1a;
+  --card:    rgba(255,255,255,0.96);
+}
+
+* { box-sizing: border-box; margin:0; padding:0; }
+
+body {
+  font-family: 'M PLUS Rounded 1c', sans-serif;
+  min-height: 100vh;
+  background: #0a1628;
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+/* STARRY NIGHT BG */
+.bg-wrap {
+  position: fixed; inset: 0; z-index: 0;
+  background: radial-gradient(ellipse at 20% 50%, #1a3a5c 0%, #0a1628 60%);
+}
+.star {
+  position: fixed;
+  background: white;
+  border-radius: 50%;
+  animation: twinkle ease-in-out infinite;
+}
+@keyframes twinkle {
+  0%,100% { opacity: 0.2; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.3); }
+}
+
+/* GROUND */
+.ground {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 80px;
+  background: linear-gradient(180deg, #2d5a1b 0%, #1a3a0f 40%, #0f2208 100%);
+  z-index: 1;
+}
+.grass-top {
+  position: absolute;
+  top: -18px; left: 0; right: 0;
+  height: 22px;
+  background: radial-gradient(ellipse 18px 16px at 50% 100%, #4a9a28 50%, transparent 51%);
+  background-size: 22px 22px;
+  background-repeat: repeat-x;
+}
+
+/* MOON */
+.moon {
+  position: fixed;
+  top: 30px; right: 50px;
+  width: 70px; height: 70px;
+  background: radial-gradient(circle at 35% 35%, #fffde7, #ffd54f);
+  border-radius: 50%;
+  box-shadow: 0 0 30px 10px rgba(255,213,79,0.3);
+  z-index: 1;
+}
+
+/* CONTAINER */
+.container {
+  position: relative; z-index: 10;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 16px 16px 110px;
+}
+
+/* TITLE */
+.title-box {
+  text-align: center;
+  margin-bottom: 14px;
+  padding: 16px 20px 12px;
+  background: rgba(255,255,255,0.10);
+  backdrop-filter: blur(10px);
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+.title-box h1 {
+  font-family: 'Yomogi', cursive;
+  font-size: 1.7rem;
+  color: #fff;
+  text-shadow: 0 0 20px rgba(255,213,79,0.6);
+  line-height: 1.3;
+}
+.title-box p { font-size: 0.78rem; color: rgba(255,255,255,0.6); margin-top:4px; }
+
+/* LEVEL INDICATOR */
+.level-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.level-pill {
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  transition: all 0.3s;
+}
+.level-easy   { background: #4ade80; color: #14532d; }
+.level-hard   { background: #f97316; color: #fff; }
+.level-label  { color: rgba(255,255,255,0.7); font-size: 0.78rem; }
+
+/* SCORE */
+.score-bar {
+  display: flex;
+  justify-content: space-around;
+  background: rgba(255,255,255,0.10);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 18px;
+  padding: 10px;
+  margin-bottom: 12px;
+}
+.score-item { text-align: center; }
+.score-num  { font-size: 1.5rem; font-weight: 800; color: #fff; }
+.score-label{ font-size: 0.68rem; color: rgba(255,255,255,0.5); }
+
+.progress-bar {
+  height: 8px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 4px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4ade80, #FFD93D);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+/* CARD */
+.card {
+  background: var(--card);
+  border-radius: 28px;
+  padding: 22px 18px 18px;
+  margin-bottom: 14px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+  text-align: center;
+}
+
+.category-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  margin-bottom: 10px;
+  color: white;
+}
+
+.animal-emoji {
+  font-size: 5.5rem;
+  line-height: 1;
+  display: block;
+  margin: 6px 0 10px;
+  animation: popIn 0.45s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes popIn {
+  from { transform: scale(0.2) rotate(-15deg); opacity:0; }
+  to   { transform: scale(1) rotate(0deg); opacity:1; }
+}
+
+.animal-name {
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+
+.hint-text {
+  font-size: 0.8rem;
+  color: #777;
+  background: #f5f5f5;
+  border-radius: 12px;
+  padding: 6px 12px;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+/* CHOICE BUTTONS — 5 categories */
+.choice-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.choice-grid .full-width {
+  grid-column: 1 / -1;
+}
+
+.choice-btn {
+  border: none;
+  border-radius: 18px;
+  padding: 13px 8px;
+  font-family: 'M PLUS Rounded 1c', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.18);
+  color: white;
+}
+.choice-btn .btn-icon { font-size: 1.6rem; }
+.choice-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,0.18); }
+.choice-btn:disabled { opacity: 0.45; cursor: default; }
+
+.btn-mammal  { background: linear-gradient(135deg, #FFB347, #FF7F00); }
+.btn-bird    { background: linear-gradient(135deg, #56CCF2, #2F80ED); }
+.btn-fish    { background: linear-gradient(135deg, #43E8C8, #00897B); }
+.btn-insect  { background: linear-gradient(135deg, #C084FC, #7C3AED); }
+.btn-other   { background: linear-gradient(135deg, #F87171, #DC2626); }
+
+/* RESULT */
+.result-box {
+  border-radius: 20px;
+  padding: 14px 18px;
+  margin-bottom: 12px;
+  text-align: center;
+  font-weight: 700;
+  animation: slideDown 0.3s ease;
+  display: none;
+}
+@keyframes slideDown {
+  from { opacity:0; transform:translateY(-8px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.result-box.correct { background: #dcfce7; color: #166534; border: 2px solid #86efac; display:block; }
+.result-box.wrong   { background: #fee2e2; color: #991b1b; border: 2px solid #fca5a5; display:block; }
+.result-icon { font-size: 2rem; display:block; margin-bottom: 4px; }
+.result-explain { font-size: 0.8rem; font-weight: 400; color: #555; margin-top: 6px; line-height: 1.6; }
+
+.next-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #FFD93D, #FF9800);
+  color: #3D2B1F;
+  border: none;
+  border-radius: 20px;
+  padding: 14px;
+  font-family: 'M PLUS Rounded 1c', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+  display: none;
+  transition: transform 0.15s;
+}
+.next-btn:active { transform: translateY(3px); }
+
+/* LEGEND */
+.legend {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  backdrop-filter: blur(8px);
+  border-radius: 18px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.legend h3 { font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-bottom:8px; }
+.legend-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.legend-tag {
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: white;
+}
+
+/* FINISH */
+.finish-box {
+  background: var(--card);
+  border-radius: 28px;
+  padding: 30px 24px;
+  text-align: center;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+  display: none;
+}
+.finish-box.show { display: block; }
+.finish-emoji { font-size: 4rem; margin-bottom: 8px; }
+.finish-box h2 { font-size: 1.4rem; font-weight: 800; margin-bottom: 8px; }
+.big-score { font-size: 3rem; font-weight: 800; color: var(--mammal); }
+.finish-msg { color: #666; font-size: 0.88rem; margin: 10px 0 20px; line-height: 1.6; }
+
+.restart-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.restart-btn {
+  background: linear-gradient(135deg, #4ade80, #16a34a);
+  color: white;
+  border: none;
+  border-radius: 18px;
+  padding: 12px 24px;
+  font-family: 'M PLUS Rounded 1c', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+}
+.restart-btn.hard-btn {
+  background: linear-gradient(135deg, #f97316, #c2410c);
+}
+
+/* STREAK */
+.streak-box {
+  position: fixed;
+  top: 20px; left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #FFD93D, #FF9800);
+  color: #3D2B1F;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  z-index: 100;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.streak-box.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="bg-wrap"></div>
+<div class="moon"></div>
+<div class="ground"><div class="grass-top"></div></div>
+<div class="streak-box" id="streakBox">🔥 連続正解！</div>
+
+<script>
+// Generate stars
+for (let i = 0; i < 80; i++) {
+  const s = document.createElement('div');
+  s.className = 'star';
+  const size = Math.random() * 2.5 + 0.5;
+  s.style.cssText = `width:${size}px;height:${size}px;top:${Math.random()*85}%;left:${Math.random()*100}%;animation-duration:${2+Math.random()*3}s;animation-delay:${Math.random()*3}s`;
+  document.querySelector('.bg-wrap').appendChild(s);
+}
+</script>
+
+<div class="container">
+  <div class="title-box">
+    <h1>🐾 どうぶつ なかまわけ</h1>
+    <p>小学校受験対策 ／ 動物の種類を覚えよう！</p>
+  </div>
+
+  <div class="legend">
+    <h3>📌 なかまの種類</h3>
+    <div class="legend-row">
+      <div class="legend-tag" style="background:#FF7F00">🐻 ほにゅう類</div>
+      <div class="legend-tag" style="background:#2F80ED">🐦 とり類</div>
+      <div class="legend-tag" style="background:#00897B">🐟 さかな類</div>
+      <div class="legend-tag" style="background:#7C3AED">🐛 こんちゅう</div>
+      <div class="legend-tag" style="background:#DC2626">🐸 その他</div>
+    </div>
+  </div>
+
+  <div class="level-box">
+    <span class="level-label">レベル：</span>
+    <span class="level-pill" id="levelPill">⭐ やさしい</span>
+  </div>
+
+  <div class="score-bar">
+    <div class="score-item">
+      <div class="score-num" id="scoreCorrect">0</div>
+      <div class="score-label">せいかい</div>
+    </div>
+    <div class="score-item">
+      <div class="score-num" id="scoreCurrent">0</div>
+      <div class="score-label">もんめ</div>
+    </div>
+    <div class="score-item">
+      <div class="score-num" id="scoreTotal">0</div>
+      <div class="score-label">ぜんぶ</div>
+    </div>
+    <div class="score-item">
+      <div class="score-num" id="streakCount">0</div>
+      <div class="score-label">れんぞく🔥</div>
+    </div>
+  </div>
+
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+  <div id="quizSection">
+    <div class="card">
+      <div class="category-badge" id="categoryBadge" style="background:#888">?</div>
+      <span class="animal-emoji" id="animalEmoji">🐶</span>
+      <div class="animal-name" id="animalName">いぬ</div>
+      <div class="hint-text" id="hintText">ヒントがここに出るよ！</div>
+      <div class="choice-grid">
+        <button class="choice-btn btn-mammal" onclick="answer('mammal')">
+          <span class="btn-icon">🐻</span>ほにゅう類
+        </button>
+        <button class="choice-btn btn-bird" onclick="answer('bird')">
+          <span class="btn-icon">🐦</span>とり類
+        </button>
+        <button class="choice-btn btn-fish" onclick="answer('fish')">
+          <span class="btn-icon">🐟</span>さかな類
+        </button>
+        <button class="choice-btn btn-insect" onclick="answer('insect')">
+          <span class="btn-icon">🐛</span>こんちゅう
+        </button>
+        <button class="choice-btn btn-other full-width" onclick="answer('other')">
+          <span class="btn-icon">🐸</span>その他（は虫類・両生類・貝など）
+        </button>
+      </div>
+    </div>
+
+    <div class="result-box" id="resultBox">
+      <span class="result-icon" id="resultIcon"></span>
+      <div id="resultText"></div>
+      <div class="result-explain" id="resultExplain"></div>
+    </div>
+
+    <button class="next-btn" id="nextBtn" onclick="nextQuestion()">つぎのもんだいへ ➜</button>
+  </div>
+
+  <div class="finish-box" id="finishBox">
+    <div class="finish-emoji" id="finishEmoji">🎉</div>
+    <h2>ぜんもんおわったよ！</h2>
+    <div class="big-score"><span id="finalScore">0</span> / <span id="finalTotal">0</span></div>
+    <div class="finish-msg" id="finishMsg"></div>
+    <div class="restart-row">
+      <button class="restart-btn" onclick="restart('easy')">⭐ やさしいモードで もう一度</button>
+      <button class="restart-btn hard-btn" onclick="restart('hard')">🔥 むずかしいモードに挑戦！</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========== ANIMAL DATA ==========
+const easyAnimals = [
+  // ほにゅう類 — obvious ones
+  { name:'いぬ',       emoji:'🐶', type:'mammal', badge:'ほにゅう類', hint:'子犬を産んでおっぱいで育てる。人間の友達！' },
+  { name:'ねこ',       emoji:'🐱', type:'mammal', badge:'ほにゅう類', hint:'子猫を産んでおっぱいで育てる。ニャーと鳴くよ。' },
+  { name:'ライオン',   emoji:'🦁', type:'mammal', badge:'ほにゅう類', hint:'アフリカの王様！赤ちゃんを産んでおっぱいで育てる。' },
+  { name:'ぞう',       emoji:'🐘', type:'mammal', badge:'ほにゅう類', hint:'陸で一番大きい動物。赤ちゃんを産むほにゅう類！' },
+  { name:'うさぎ',     emoji:'🐰', type:'mammal', badge:'ほにゅう類', hint:'ぴょんぴょん跳ねる。赤ちゃんを産んでおっぱいで育てる。' },
+  { name:'くま',       emoji:'🐻', type:'mammal', badge:'ほにゅう類', hint:'森に住む大きな動物。冬眠するほにゅう類！' },
+  { name:'きりん',     emoji:'🦒', type:'mammal', badge:'ほにゅう類', hint:'首が長い！アフリカに住むほにゅう類。' },
+  // とり類 — obvious ones
+  { name:'すずめ',     emoji:'🐦', type:'bird',   badge:'とり類', hint:'空を飛ぶ。卵を産む。チュンチュン鳴く身近な鳥！' },
+  { name:'にわとり',   emoji:'🐔', type:'bird',   badge:'とり類', hint:'卵を産む鳥。コケコッコー！飛べないけど鳥！' },
+  { name:'はと',       emoji:'🕊️', type:'bird',   badge:'とり類', hint:'公園にいる鳥。クルクル鳴く。卵を産む。' },
+  { name:'からす',     emoji:'🐦‍⬛', type:'bird', badge:'とり類', hint:'真っ黒な鳥。カーカー鳴く。頭がいい鳥！' },
+  { name:'つる',       emoji:'🦢', type:'bird',   badge:'とり類', hint:'長い首と脚の美しい鳥。千羽鶴で有名！' },
+  // さかな類
+  { name:'きんぎょ',   emoji:'🐠', type:'fish',   badge:'さかな類', hint:'水の中に住む。えらで呼吸する。卵を産む魚！' },
+  { name:'さんま',     emoji:'🐟', type:'fish',   badge:'さかな類', hint:'秋においしい細長い魚。えらで泳ぐ！' },
+  { name:'たい',       emoji:'🐡', type:'fish',   badge:'さかな類', hint:'めでたい魚！赤くてきれいな魚。えらで呼吸。' },
+  { name:'さけ',       emoji:'🐟', type:'fish',   badge:'さかな類', hint:'川と海を行き来する魚。おにぎりの具にもなるよ！' },
+  // こんちゅう
+  { name:'ちょうちょ', emoji:'🦋', type:'insect', badge:'こんちゅう', hint:'6本足、羽が4枚。花から花へ飛ぶ昆虫！' },
+  { name:'かぶとむし', emoji:'🪲', type:'insect', badge:'こんちゅう', hint:'頭にツノがある！6本足の昆虫の王様。' },
+  { name:'あり',       emoji:'🐜', type:'insect', badge:'こんちゅう', hint:'6本足。チームワークで働く小さな昆虫。' },
+  { name:'てんとうむし',emoji:'🐞', type:'insect', badge:'こんちゅう', hint:'赤くて黒い水玉模様。6本足の昆虫！' },
+  // その他
+  { name:'かえる',     emoji:'🐸', type:'other',  badge:'その他（両生類）', hint:'水と陸を行き来する両生類。オタマジャクシから変身！' },
+  { name:'かめ',       emoji:'🐢', type:'other',  badge:'その他（は虫類）', hint:'甲羅がある爬虫類。ウミガメは海で泳ぐよ！' },
+];
+
+const hardAnimals = [
+  // トリッキーほにゅう類
+  { name:'くじら',     emoji:'🐋', type:'mammal', badge:'ほにゅう類', hint:'海に住むけど魚じゃない！肺で呼吸して赤ちゃんを産むほにゅう類！' },
+  { name:'いるか',     emoji:'🐬', type:'mammal', badge:'ほにゅう類', hint:'泳ぎが得意だけど魚じゃない！おっぱいで育てるほにゅう類。' },
+  { name:'こうもり',   emoji:'🦇', type:'mammal', badge:'ほにゅう類', hint:'空を飛ぶけど鳥じゃない！羽膜で飛ぶほにゅう類。夜行性。' },
+  { name:'あざらし',   emoji:'🦭', type:'mammal', badge:'ほにゅう類', hint:'海に住んでるけど魚じゃない！肺で呼吸するほにゅう類。' },
+  { name:'かっぱ',     emoji:'🦦', type:'mammal', badge:'ほにゅう類', hint:'水辺に住むカワウソ。魚じゃなくほにゅう類！手をつないで眠るよ。' },
+  // トリッキー鳥類
+  { name:'ペンギン',   emoji:'🐧', type:'bird',   badge:'とり類', hint:'空は飛べないけど鳥！卵を産む。南極に住む。羽で泳ぐ！' },
+  { name:'ダチョウ',   emoji:'🦅', type:'bird',   badge:'とり類', hint:'世界一大きい鳥！飛べないけど走るのが速い。卵を産む鳥。' },
+  // トリッキー魚類
+  { name:'タコ',       emoji:'🐙', type:'other',  badge:'その他（軟体動物）', hint:'8本足。魚じゃない！骨がない軟体動物。えら呼吸はするよ。' },
+  { name:'くらげ',     emoji:'🪼', type:'other',  badge:'その他（刺胞動物）', hint:'ふわふわ泳ぐけど魚じゃない！骨も心臓もない生き物。' },
+  { name:'えび',       emoji:'🦐', type:'other',  badge:'その他（甲殻類）', hint:'魚じゃなくてエビ！足が10本ある甲殻類。カニと仲間。' },
+  // トリッキー両生類・は虫類
+  { name:'やもり',     emoji:'🦎', type:'other',  badge:'その他（は虫類）', hint:'壁を登れる！カエルに似てるけは虫類。卵を産む。' },
+  { name:'へび',       emoji:'🐍', type:'other',  badge:'その他（は虫類）', hint:'足がないは虫類。卵を産む。うろこで体を覆っている。' },
+  // トリッキー虫
+  { name:'くも',       emoji:'🕷️', type:'other',  badge:'その他（クモ類）', hint:'8本足！6本足じゃないからこんちゅうじゃない！クモ類。' },
+  { name:'ダンゴムシ', emoji:'🐛', type:'other',  badge:'その他（甲殻類）', hint:'丸まる！実は虫じゃなくてエビやカニの仲間（甲殻類）。' },
+  // 追加ほにゅう類
+  { name:'パンダ',     emoji:'🐼', type:'mammal', badge:'ほにゅう類', hint:'白黒のかわいい動物。赤ちゃんを産むほにゅう類。竹を食べる！' },
+  { name:'さる',       emoji:'🐒', type:'mammal', badge:'ほにゅう類', hint:'木登り上手！人間と仲間のほにゅう類。赤ちゃんを産む。' },
+];
+
+const categoryInfo = {
+  mammal: { label:'ほにゅう類', color:'#FF7F00', icon:'🐻' },
+  bird:   { label:'とり類',     color:'#2F80ED', icon:'🐦' },
+  fish:   { label:'さかな類',   color:'#00897B', icon:'🐟' },
+  insect: { label:'こんちゅう', color:'#7C3AED', icon:'🐛' },
+  other:  { label:'その他',     color:'#DC2626', icon:'🐸' },
+};
+
+// STATE
+let mode = 'easy';
+let questions = [];
+let current = 0;
+let correct = 0;
+let streak = 0;
+let answered = false;
+let streakTimer = null;
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function buildQuestions(m) {
+  if (m === 'easy') return shuffle(easyAnimals);
+  if (m === 'hard') return shuffle(hardAnimals);
+  return shuffle([...easyAnimals, ...hardAnimals]);
+}
+
+function loadQuestion() {
+  answered = false;
+  const q = questions[current];
+  const cat = categoryInfo[q.type];
+
+  const badge = document.getElementById('categoryBadge');
+  badge.style.background = '#aaa';
+  badge.textContent = '？ なんのなかま？';
+
+  document.getElementById('animalEmoji').textContent = q.emoji;
+  document.getElementById('animalName').textContent = q.name;
+  document.getElementById('hintText').textContent = q.hint;
+
+  document.getElementById('resultBox').className = 'result-box';
+  document.getElementById('nextBtn').style.display = 'none';
+
+  document.querySelectorAll('.choice-btn').forEach(b => b.disabled = false);
+
+  // re-trigger animation
+  const em = document.getElementById('animalEmoji');
+  em.style.animation = 'none';
+  setTimeout(() => { em.style.animation = 'popIn 0.45s cubic-bezier(0.34,1.56,0.64,1)'; }, 10);
+
+  document.getElementById('scoreCurrent').textContent = current + 1;
+  document.getElementById('scoreTotal').textContent = questions.length;
+  document.getElementById('progressFill').style.width = (current / questions.length * 100) + '%';
+  document.getElementById('streakCount').textContent = streak;
+
+  // level pill
+  const pill = document.getElementById('levelPill');
+  if (mode === 'easy') { pill.textContent = '⭐ やさしい'; pill.className = 'level-pill level-easy'; }
+  else { pill.textContent = '🔥 むずかしい'; pill.className = 'level-pill level-hard'; }
+}
+
+function answer(choice) {
+  if (answered) return;
+  answered = true;
+  const q = questions[current];
+  const isCorrect = choice === q.type;
+  const cat = categoryInfo[q.type];
+
+  if (isCorrect) {
+    correct++;
+    streak++;
+  } else {
+    streak = 0;
+  }
+
+  document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
+  document.getElementById('scoreCorrect').textContent = correct;
+  document.getElementById('streakCount').textContent = streak;
+
+  // reveal badge
+  const badge = document.getElementById('categoryBadge');
+  badge.style.background = cat.color;
+  badge.textContent = cat.icon + ' ' + cat.label;
+
+  const box = document.getElementById('resultBox');
+  const icon = document.getElementById('resultIcon');
+  const text = document.getElementById('resultText');
+  const explain = document.getElementById('resultExplain');
+
+  if (isCorrect) {
+    box.className = 'result-box correct';
+    icon.textContent = streak >= 3 ? '🔥' : '⭕';
+    text.textContent = streak >= 3 ? `すごい！${streak}れんぞくせいかい！！` : 'せいかい！すごい！';
+    explain.textContent = q.hint;
+    if (streak >= 3) showStreak(streak);
+  } else {
+    box.className = 'result-box wrong';
+    icon.textContent = '❌';
+    text.textContent = `ざんねん… こたえは「${cat.label}」だよ！`;
+    explain.textContent = q.hint;
+  }
+
+  document.getElementById('nextBtn').style.display = 'block';
+
+  // Auto-level up hint
+  if (mode === 'easy' && correct >= 10 && streak >= 3) {
+    document.getElementById('nextBtn').textContent = '🔥 むずかしいモードに挑戦！ ➜';
+  }
+}
+
+function showStreak(n) {
+  const box = document.getElementById('streakBox');
+  box.textContent = `🔥 ${n}れんぞくせいかい！すごい！`;
+  box.classList.add('show');
+  clearTimeout(streakTimer);
+  streakTimer = setTimeout(() => box.classList.remove('show'), 2000);
+}
+
+function nextQuestion() {
+  // Check if we should level up
+  if (mode === 'easy' && correct >= 10 && streak >= 3 && current === questions.length - 1) {
+    restart('hard');
+    return;
+  }
+  current++;
+  if (current >= questions.length) {
+    showFinish();
+  } else {
+    document.getElementById('nextBtn').textContent = 'つぎのもんだいへ ➜';
+    loadQuestion();
+  }
+}
+
+function showFinish() {
+  document.getElementById('quizSection').style.display = 'none';
+  const fb = document.getElementById('finishBox');
+  fb.classList.add('show');
+  document.getElementById('finalScore').textContent = correct;
+  document.getElementById('finalTotal').textContent = questions.length;
+  const pct = correct / questions.length;
+  let msg = '', emoji = '';
+  if (pct === 1)    { emoji='🏆'; msg='ぜんぶせいかい！かんぺきだ！どうぶつはかせだね！'; }
+  else if (pct>=0.8){ emoji='🌟'; msg='とてもよくできました！ほぼ完璧！むずかしいモードも挑戦してみよう！'; }
+  else if (pct>=0.6){ emoji='😊'; msg='なかなかいいね！まちがえたところを思い出してみよう！'; }
+  else              { emoji='💪'; msg='もう一度チャレンジ！だんだんわかってくるよ！'; }
+  document.getElementById('finishEmoji').textContent = emoji;
+  document.getElementById('finishMsg').textContent = msg;
+  document.getElementById('progressFill').style.width = '100%';
+}
+
+function restart(m) {
+  mode = m || 'easy';
+  current = 0; correct = 0; streak = 0;
+  questions = buildQuestions(mode);
+  document.getElementById('quizSection').style.display = 'block';
+  document.getElementById('finishBox').classList.remove('show');
+  document.getElementById('scoreCorrect').textContent = '0';
+  document.getElementById('streakCount').textContent = '0';
+  document.getElementById('nextBtn').textContent = 'つぎのもんだいへ ➜';
+  loadQuestion();
+}
+
+// INIT
+restart('easy');
+</script>
+</body>
+</html>
