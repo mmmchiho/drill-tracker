@@ -310,15 +310,13 @@ function renderWeak() {
       : '<span class="badge badge-green">' + fmt(w.remindDate) + 'に復習</span>';
     // ページ単位の完了状態
     const donePagesSet = new Set(w.donePages || []);
-    const allDone = w.pages.split(',').every(p => donePagesSet.has(p.trim()));
     const pages = w.pages.split(',').map(p => {
       const pg = p.trim();
       const isDonePg = donePagesSet.has(pg);
-      const style = isDonePg
-        ? 'font-size:11px;padding:3px 10px;border-radius:20px;background:#e5f5ec;color:#1a7a3c;cursor:pointer;border:none;display:inline-block;margin:2px'
-        : 'font-size:11px;padding:3px 10px;border-radius:20px;background:#e8f1fb;color:#1a5ca8;cursor:pointer;border:none;display:inline-block;margin:2px';
-      const label = isDonePg ? '✅p.' + pg : 'p.' + pg;
-      return '<button onclick="togglePage(' + w.id + ','' + pg + '')" style="' + style + '">' + label + '</button>';
+      const bg = isDonePg ? '#e5f5ec' : '#e8f1fb';
+      const col = isDonePg ? '#1a7a3c' : '#1a5ca8';
+      const label = (isDonePg ? '✅p.' : 'p.') + pg;
+      return '<button onclick="togglePage(' + w.id + ',decodeURIComponent(\'' + encodeURIComponent(pg) + '\'))" style="font-size:11px;padding:3px 10px;border-radius:20px;background:' + bg + ';color:' + col + ';cursor:pointer;border:none;display:inline-block;margin:2px">' + label + '</button>';
     }).join('');
     const doneBtn = isDone
       ? '<button class="small-btn" style="color:#1a7a3c" onclick="undoDone(' + w.id + ')">↩️ 戻す</button>'
