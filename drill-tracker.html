@@ -308,7 +308,18 @@ function renderWeak() {
       : d <= 7
       ? '<span class="badge badge-yellow">あと' + d + '日でリマインダー</span>'
       : '<span class="badge badge-green">' + fmt(w.remindDate) + 'に復習</span>';
-    const pages = w.pages.split(',').map(p => '<span class="pill pill-blue">p.' + p.trim() + '</span>').join('');
+    // ページ単位の完了状態
+    const donePagesSet = new Set(w.donePages || []);
+    const allDone = w.pages.split(',').every(p => donePagesSet.has(p.trim()));
+    const pages = w.pages.split(',').map(p => {
+      const pg = p.trim();
+      const isDonePg = donePagesSet.has(pg);
+      const style = isDonePg
+        ? 'font-size:11px;padding:3px 10px;border-radius:20px;background:#e5f5ec;color:#1a7a3c;cursor:pointer;border:none;display:inline-block;margin:2px'
+        : 'font-size:11px;padding:3px 10px;border-radius:20px;background:#e8f1fb;color:#1a5ca8;cursor:pointer;border:none;display:inline-block;margin:2px';
+      const label = isDonePg ? '✅p.' + pg : 'p.' + pg;
+      return '<button onclick="togglePage(' + w.id + ','' + pg + '')" style="' + style + '">' + label + '</button>';
+    }).join('');
     const doneBtn = isDone
       ? '<button class="small-btn" style="color:#1a7a3c" onclick="undoDone(' + w.id + ')">↩️ 戻す</button>'
       : '<button class="small-btn" style="color:#1a7a3c" onclick="markDone(' + w.id + ')">✅ 完了</button>';
@@ -336,6 +347,28 @@ function renderWeak() {
     : '';
 
   document.getElementById('weak-list').innerHTML = activeHtml + doneHtml;
+}
+
+function togglePage(id, pg) {
+  const w = weaks.find(w => w.id === id);
+  if (!w) return;
+  if (!w.donePages) w.donePages = [];
+  const idx = w.donePages.indexOf(pg);
+  if (idx === -1) {
+    w.donePages.push(pg);
+  } else {
+    w.donePages.splice(idx, 1);
+  }
+  // 全ページ完了したら自動で完了扱い
+  const allPages = w.pages.split(',').map(p => p.trim());
+  const donePagesSet = new Set(w.donePages);
+  if (allPages.every(p => donePagesSet.has(p))) {
+    w.done = true;
+  } else {
+    w.done = false;
+  }
+  save();
+  renderWeak();
 }
 
 function markDone(id) {
@@ -377,7 +410,7 @@ function renderLog() {
             '</div>';
         }
         const drillPart = l.drill
-          ? '<div style="font-size:11px;color:#555;line-height:1.4">' + l.drill + '</div>' +
+          ? '<div style="font-size:10px;color:#555;line-height:1.4">' + l.drill + '</div>' +
             (l.pages ? '<div class="pages-wrap">' + l.pages.split(',').map(p => '<span class="pill pill-gray">p.' + p.trim() + '</span>').join('') + '</div>' : '')
           : '';
         const freePart = l.free ? '<div style="font-size:11px;color:#555;margin-top:6px">' + l.free + '</div>' : '';
@@ -495,7 +528,7 @@ function renderProgress() {
     const trulyBar = '█'.repeat(trulyBarFilled) + '░'.repeat(20 - trulyBarFilled);
 
     return `<div class="card" style="margin-bottom:10px">
-      <div style="font-size:11px;font-weight:600;line-height:1.4;margin-bottom:6px">${d}</div>
+      <div style="font-size:10px;font-weight:600;line-height:1.4;margin-bottom:6px">${d}</div>
       <div style="font-size:10px;color:#555;font-family:monospace;letter-spacing:1px">${trulyBar}</div>
       <div style="font-size:10px;color:#888;margin-top:3px;margin-bottom:6px">${trulyDoneCount}/${total}ページ完了（${trulyPct}%）</div>
       <div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:${weakPages.length>0?'6px':'0'}">${notDonePills}</div>
