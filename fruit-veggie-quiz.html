@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>くだもの・やさい分類クイズ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@400;700&family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap');
+
+  :root {
+    --fruit-color: #FF6B6B;
+    --veggie-color: #4CAF7D;
+    --sky: #FFF8E7;
+    --ground: #8B5E3C;
+    --grass: #6BBF59;
+    --cloud: #ffffff;
+    --accent: #FFD93D;
+    --text: #3D2B1F;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'M PLUS Rounded 1c', sans-serif;
+    background: var(--sky);
+    min-height: 100vh;
+    overflow-x: hidden;
+    color: var(--text);
+  }
+
+  /* SKY BACKGROUND */
+  .sky-bg {
+    position: fixed; inset: 0; z-index: 0;
+    background: linear-gradient(180deg, #87CEEB 0%, #B0E2FF 40%, #FFF8E7 70%, #D4A056 90%, #8B5E3C 100%);
+  }
+
+  .cloud {
+    position: fixed;
+    background: white;
+    border-radius: 50px;
+    opacity: 0.85;
+    animation: floatCloud linear infinite;
+  }
+  .cloud::before, .cloud::after {
+    content: '';
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+  }
+  .c1 { width:120px; height:40px; top:8%; left:-140px; animation-duration:28s; animation-delay:0s; }
+  .c1::before { width:60px; height:55px; top:-30px; left:15px; }
+  .c1::after  { width:45px; height:45px; top:-22px; left:55px; }
+  .c2 { width:90px; height:30px; top:18%; left:-110px; animation-duration:22s; animation-delay:-8s; opacity:0.65; }
+  .c2::before { width:40px; height:40px; top:-24px; left:10px; }
+  .c2::after  { width:35px; height:35px; top:-18px; left:42px; }
+  .c3 { width:150px; height:45px; top:5%; left:-170px; animation-duration:35s; animation-delay:-15s; opacity:0.7; }
+  .c3::before { width:70px; height:65px; top:-36px; left:20px; }
+  .c3::after  { width:55px; height:50px; top:-28px; left:75px; }
+
+  @keyframes floatCloud {
+    from { left: -200px; }
+    to   { left: 110%; }
+  }
+
+  /* TREE */
+  .tree-scene {
+    position: fixed;
+    bottom: 60px; left: 50%;
+    transform: translateX(-50%);
+    width: 140px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 1;
+    pointer-events: none;
+  }
+  .tree-top {
+    width: 130px; height: 110px;
+    background: radial-gradient(ellipse at 50% 60%, #5DA84E, #3D8040);
+    border-radius: 50% 50% 40% 40%;
+    box-shadow: inset -8px -8px 20px rgba(0,0,0,0.2);
+    position: relative;
+  }
+  .tree-top::after {
+    content: '';
+    position: absolute;
+    width: 90px; height: 80px;
+    background: radial-gradient(ellipse, #6FC45E, #4D9050);
+    border-radius: 50% 50% 40% 40%;
+    top: -25px; left: 20px;
+  }
+  .tree-trunk {
+    width: 32px; height: 55px;
+    background: linear-gradient(to right, #8B5E3C, #A0723F, #7A5230);
+    border-radius: 4px 4px 8px 8px;
+  }
+  .ground-strip {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 65px;
+    background: linear-gradient(180deg, #6BBF59 0%, #4E9E40 30%, #8B5E3C 60%);
+    z-index: 1;
+  }
+
+  /* MAIN LAYOUT */
+  .container {
+    position: relative; z-index: 10;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 16px 16px 120px;
+  }
+
+  .title-box {
+    text-align: center;
+    margin-bottom: 18px;
+    padding: 14px 20px 10px;
+    background: rgba(255,255,255,0.88);
+    border-radius: 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  }
+  .title-box h1 {
+    font-family: 'Kaisei Decol', serif;
+    font-size: 1.6rem;
+    color: var(--text);
+    line-height: 1.3;
+  }
+  .title-box p {
+    font-size: 0.82rem;
+    color: #666;
+    margin-top: 4px;
+  }
+
+  /* SCORE */
+  .score-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255,255,255,0.88);
+    border-radius: 18px;
+    padding: 10px 18px;
+    margin-bottom: 14px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+  }
+  .score-item { text-align: center; }
+  .score-num { font-size: 1.6rem; font-weight: 800; }
+  .score-label { font-size: 0.7rem; color: #888; }
+  .score-correct .score-num { color: var(--fruit-color); }
+  .score-total .score-num { color: #333; }
+
+  /* QUESTION CARD */
+  .card {
+    background: rgba(255,255,255,0.95);
+    border-radius: 28px;
+    padding: 24px 20px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    text-align: center;
+    transition: transform 0.2s;
+  }
+
+  .hint-badge {
+    display: inline-block;
+    background: var(--accent);
+    color: #5a3e00;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+  }
+
+  .food-emoji {
+    font-size: 5rem;
+    line-height: 1;
+    margin: 8px 0 12px;
+    animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    display: block;
+  }
+  @keyframes popIn {
+    from { transform: scale(0.3) rotate(-10deg); opacity:0; }
+    to   { transform: scale(1) rotate(0deg); opacity:1; }
+  }
+
+  .food-name {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 6px;
+  }
+
+  .hint-text {
+    font-size: 0.82rem;
+    color: #888;
+    background: #f5f0e8;
+    border-radius: 12px;
+    padding: 6px 12px;
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+
+  /* BUTTONS */
+  .choice-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 4px;
+  }
+
+  .choice-btn {
+    border: none;
+    border-radius: 20px;
+    padding: 16px 12px;
+    font-family: 'M PLUS Rounded 1c', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.15);
+  }
+  .choice-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,0.15); }
+  .choice-btn .btn-icon { font-size: 1.8rem; }
+
+  .btn-fruit {
+    background: linear-gradient(135deg, #FF8C8C, #FF5252);
+    color: white;
+  }
+  .btn-veggie {
+    background: linear-gradient(135deg, #6FCF97, #27AE60);
+    color: white;
+  }
+  .choice-btn:disabled { opacity: 0.5; cursor: default; }
+
+  /* RESULT */
+  .result-box {
+    border-radius: 20px;
+    padding: 16px 20px;
+    margin-bottom: 14px;
+    font-size: 1rem;
+    font-weight: 700;
+    text-align: center;
+    animation: slideDown 0.3s ease;
+    display: none;
+  }
+  @keyframes slideDown {
+    from { opacity:0; transform:translateY(-10px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  .result-box.correct { background: #E8F5E9; color: #2E7D32; border: 2px solid #81C784; display:block; }
+  .result-box.wrong   { background: #FFEBEE; color: #C62828; border: 2px solid #EF9A9A; display:block; }
+
+  .result-icon { font-size: 2rem; display:block; margin-bottom:4px; }
+  .result-explain { font-size: 0.82rem; font-weight: 400; color: #555; margin-top:6px; line-height:1.6; }
+
+  .next-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #FFD93D, #FF9800);
+    color: #3D2B1F;
+    border: none;
+    border-radius: 20px;
+    padding: 14px;
+    font-family: 'M PLUS Rounded 1c', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.15);
+    transition: transform 0.15s;
+    display: none;
+  }
+  .next-btn:active { transform: translateY(3px); }
+
+  /* RULE BOX */
+  .rule-box {
+    background: rgba(255,255,255,0.9);
+    border-radius: 20px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+  }
+  .rule-box h3 { font-size: 0.85rem; color: #888; margin-bottom: 8px; }
+  .rule-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+  .rule-dot {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: flex; align-items:center; justify-content:center;
+    font-size: 0.75rem;
+    font-weight: 800;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .dot-fruit { background: #FFEBEE; color: #C62828; }
+  .dot-veggie { background: #E8F5E9; color: #2E7D32; }
+
+  /* FINISH */
+  .finish-box {
+    background: rgba(255,255,255,0.95);
+    border-radius: 28px;
+    padding: 28px 24px;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    display: none;
+  }
+  .finish-box.show { display: block; }
+  .finish-emoji { font-size: 4rem; margin-bottom: 8px; }
+  .finish-box h2 { font-size: 1.4rem; font-weight: 800; margin-bottom: 8px; }
+  .big-score { font-size: 2.8rem; font-weight: 800; color: var(--fruit-color); }
+  .finish-msg { color: #666; font-size: 0.9rem; margin: 10px 0 18px; line-height: 1.6; }
+  .restart-btn {
+    background: linear-gradient(135deg, #FF8C8C, #FF5252);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 14px 32px;
+    font-family: 'M PLUS Rounded 1c', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.15);
+  }
+
+  .progress-bar {
+    height: 8px;
+    background: #eee;
+    border-radius: 4px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #FF6B6B, #FFD93D);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+</style>
+</head>
+<body>
+<div class="sky-bg"></div>
+<div class="cloud c1"></div>
+<div class="cloud c2"></div>
+<div class="cloud c3"></div>
+<div class="ground-strip"></div>
+<div class="tree-scene">
+  <div class="tree-top"></div>
+  <div class="tree-trunk"></div>
+</div>
+
+<div class="container">
+  <div class="title-box">
+    <h1>🍎 くだもの・やさい<br>わけてみよう！</h1>
+    <p>小学校受験対策 ／ 農林水産省の分類基準</p>
+  </div>
+
+  <div class="rule-box">
+    <h3>📌 おぼえておこう！</h3>
+    <div class="rule-item">
+      <div class="rule-dot dot-fruit">果</div>
+      <div><strong>くだもの（果物）</strong>…木や多年草（何年も生きる草）になる実で、あまくてそのまま食べるもの</div>
+    </div>
+    <div class="rule-item">
+      <div class="rule-dot dot-veggie">野</div>
+      <div><strong>やさい（野菜）</strong>…一年草（一年で育つ草）の植物で、料理に使うもの（実・葉・根など）</div>
+    </div>
+  </div>
+
+  <div class="score-bar">
+    <div class="score-item score-correct">
+      <div class="score-num" id="scoreCorrect">0</div>
+      <div class="score-label">せいかい</div>
+    </div>
+    <div class="score-item score-total">
+      <div class="score-num" id="scoreCurrent">0</div>
+      <div class="score-label">もん め</div>
+    </div>
+    <div class="score-item">
+      <div class="score-num" id="scoreTotal">0</div>
+      <div class="score-label">ぜんぶ</div>
+    </div>
+  </div>
+
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+  <div id="quizSection">
+    <div class="card" id="questionCard">
+      <div class="hint-badge" id="hintBadge">🌳 木になる？</div>
+      <span class="food-emoji" id="foodEmoji">🍎</span>
+      <div class="food-name" id="foodName">りんご</div>
+      <div class="hint-text" id="hintText">木になる実です。甘くておやつにもなるよ！</div>
+      <div class="choice-row">
+        <button class="choice-btn btn-fruit" id="btnFruit" onclick="answer('fruit')">
+          <span class="btn-icon">🍓</span>くだもの
+        </button>
+        <button class="choice-btn btn-veggie" id="btnVeggie" onclick="answer('veggie')">
+          <span class="btn-icon">🥦</span>やさい
+        </button>
+      </div>
+    </div>
+
+    <div class="result-box" id="resultBox">
+      <span class="result-icon" id="resultIcon"></span>
+      <div id="resultText"></div>
+      <div class="result-explain" id="resultExplain"></div>
+    </div>
+
+    <button class="next-btn" id="nextBtn" onclick="nextQuestion()">つぎのもんだいへ ➜</button>
+  </div>
+
+  <div class="finish-box" id="finishBox">
+    <div class="finish-emoji" id="finishEmoji">🎉</div>
+    <h2>ぜんもんおわったよ！</h2>
+    <div class="big-score"><span id="finalScore">0</span> / <span id="finalTotal">0</span></div>
+    <div class="finish-msg" id="finishMsg"></div>
+    <button class="restart-btn" onclick="restart()">もう一度チャレンジ！ 🔄</button>
+  </div>
+</div>
+
+<script>
+const foods = [
+  { name:'りんご',    emoji:'🍎', type:'fruit',  badge:'木になる実',   hint:'りんごの木に実るよ！赤くておいしい木の実。' },
+  { name:'バナナ',    emoji:'🍌', type:'fruit',  badge:'木（多年草）になる', hint:'バナナの木（実はとても大きな草）に実るよ。トロピカルな甘さ！' },
+  { name:'イチゴ',   emoji:'🍓', type:'fruit',  badge:'多年草の実',    hint:'低い草に実るけど、何年も生きる草（多年草）だからくだもの！' },
+  { name:'スイカ',   emoji:'🍉', type:'veggie', badge:'一年草の実',    hint:'一年で育つつるに実るから、農林水産省ではやさいに分類！でも甘いね。' },
+  { name:'メロン',   emoji:'🍈', type:'veggie', badge:'一年草の実',    hint:'スイカと同じ、一年草のつるに実る。やさいだけどあまい！' },
+  { name:'トマト',   emoji:'🍅', type:'veggie', badge:'一年草の実',    hint:'一年草の草に実る。料理によく使うのでやさい！' },
+  { name:'キュウリ', emoji:'🥒', type:'veggie', badge:'一年草の実',    hint:'一年草のツルに実る緑のやさい。サラダや漬物に使うね。' },
+  { name:'ナス',     emoji:'🍆', type:'veggie', badge:'一年草の実',    hint:'一年草の茎に実る紫のやさい。焼いたり炒めたりするね。' },
+  { name:'みかん',   emoji:'🍊', type:'fruit',  badge:'木になる実',   hint:'みかんの木になる実。冬においしい木の果物！' },
+  { name:'ぶどう',   emoji:'🍇', type:'fruit',  badge:'木（つる）になる実', hint:'ぶどうの木（つる）に実るよ。小さい実がいっぱい！' },
+  { name:'もも',     emoji:'🍑', type:'fruit',  badge:'木になる実',   hint:'桃の木に実る甘くてやわらかい果物！' },
+  { name:'かき',     emoji:'🍊', type:'fruit',  badge:'木になる実',   hint:'柿の木になるオレンジの実。秋においしい！', emoji2:'🟠' },
+  { name:'にんじん', emoji:'🥕', type:'veggie', badge:'一年草の根',    hint:'土の中で育つ根っこ。一年草だからやさい！' },
+  { name:'たまねぎ', emoji:'🧅', type:'veggie', badge:'一年草の葉の根元', hint:'土の中で育つ。葉っぱの根本が大きくなったやさい。' },
+  { name:'キャベツ', emoji:'🥬', type:'veggie', badge:'一年草の葉',   hint:'一年草の葉っぱを食べるやさい。まるまる大きい！' },
+  { name:'レモン',   emoji:'🍋', type:'fruit',  badge:'木になる実',   hint:'レモンの木になる黄色い実。すっぱいけど果物！' },
+  { name:'パイナップル', emoji:'🍍', type:'fruit', badge:'多年草の実', hint:'何年も生きる低い草（多年草）の実だから果物！' },
+  { name:'カボチャ', emoji:'🎃', type:'veggie', badge:'一年草の実',    hint:'一年草のツルに実る。甘くても料理に使うのでやさい！' },
+  { name:'とうもろこし', emoji:'🌽', type:'veggie', badge:'一年草の実', hint:'一年草の茎に実る。甘くてもやさいに分類！' },
+  { name:'さくらんぼ', emoji:'🍒', type:'fruit', badge:'木になる実',  hint:'桜の木（さくらんぼの木）になる小さな赤い実。果物！' },
+  { name:'なし',      emoji:'🍐', type:'fruit',  badge:'木になる実',   hint:'なしの木になる丸い実。シャリシャリして甘い果物！' },
+  { name:'いちご',    emoji:'🍓', type:'fruit',  badge:'多年草の実',   hint:'何年も生きる草（多年草）に実るからくだもの！甘くておいしい。' },
+  { name:'くり',      emoji:'🌰', type:'fruit',  badge:'木になる実',   hint:'くりの木になる実。イガイガに包まれているよ。果物！' },
+  { name:'キウイ',    emoji:'🥝', type:'fruit',  badge:'木（つる）になる実', hint:'キウイの木（つる）に実る茶色い果物。中は緑！' },
+  { name:'さつまいも',emoji:'🍠', type:'veggie', badge:'一年草の根',    hint:'土の中で育つ甘い根っこ。一年草だからやさい！' },
+  { name:'だいこん',  emoji:'🫚', type:'veggie', badge:'一年草の根',    hint:'土の中で育つ白い根っこ。おでんや味噌汁に入るやさい！', emoji:'🥬' },
+  { name:'ごぼう',    emoji:'🪵', type:'veggie', badge:'一年草の根',    hint:'細長く土の中で育つ根っこ。きんぴらごぼうに使うやさい！' },
+  { name:'ほうれんそう', emoji:'🥬', type:'veggie', badge:'一年草の葉', hint:'葉っぱを食べる一年草。ポパイが食べるやさい！' },
+  { name:'えだまめ',  emoji:'🫛', type:'veggie', badge:'一年草の実',    hint:'一年草の豆のさや。大豆が熟す前に食べるやさい！' },
+  { name:'ピーマン',  emoji:'🫑', type:'veggie', badge:'一年草の実',    hint:'一年草の草に実る緑の実。パプリカと仲間のやさい！' },
+  { name:'はくさい',  emoji:'🥬', type:'veggie', badge:'一年草の葉',    hint:'葉っぱを食べる一年草。鍋料理によく使うやさい！' },
+];
+
+let shuffled = [];
+let current = 0;
+let correct = 0;
+let answered = false;
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function loadQuestion() {
+  answered = false;
+  const q = shuffled[current];
+  document.getElementById('hintBadge').textContent = '🌳 ' + q.badge;
+  document.getElementById('foodEmoji').textContent = q.emoji;
+  document.getElementById('foodName').textContent = q.name;
+  document.getElementById('hintText').textContent = q.hint;
+  document.getElementById('resultBox').className = 'result-box';
+  document.getElementById('nextBtn').style.display = 'none';
+  document.getElementById('btnFruit').disabled = false;
+  document.getElementById('btnVeggie').disabled = false;
+  document.getElementById('foodEmoji').style.animation = 'none';
+  setTimeout(() => { document.getElementById('foodEmoji').style.animation = 'popIn 0.4s cubic-bezier(0.34,1.56,0.64,1)'; }, 10);
+  document.getElementById('scoreCurrent').textContent = current + 1;
+  document.getElementById('scoreTotal').textContent = shuffled.length;
+  document.getElementById('progressFill').style.width = (current / shuffled.length * 100) + '%';
+}
+
+function answer(choice) {
+  if (answered) return;
+  answered = true;
+  const q = shuffled[current];
+  const isCorrect = choice === q.type;
+  if (isCorrect) correct++;
+
+  document.getElementById('btnFruit').disabled = true;
+  document.getElementById('btnVeggie').disabled = true;
+  document.getElementById('scoreCorrect').textContent = correct;
+
+  const box = document.getElementById('resultBox');
+  const icon = document.getElementById('resultIcon');
+  const text = document.getElementById('resultText');
+  const explain = document.getElementById('resultExplain');
+
+  if (isCorrect) {
+    box.className = 'result-box correct';
+    icon.textContent = '⭕';
+    text.textContent = 'せいかい！すごい！';
+    explain.textContent = q.hint;
+  } else {
+    box.className = 'result-box wrong';
+    icon.textContent = '❌';
+    const correct_label = q.type === 'fruit' ? 'くだもの（果物）' : 'やさい（野菜）';
+    text.textContent = `ざんねん… こたえは「${correct_label}」だよ！`;
+    explain.textContent = q.hint;
+  }
+  document.getElementById('nextBtn').style.display = 'block';
+}
+
+function nextQuestion() {
+  current++;
+  if (current >= shuffled.length) {
+    showFinish();
+  } else {
+    loadQuestion();
+  }
+}
+
+function showFinish() {
+  document.getElementById('quizSection').style.display = 'none';
+  const fb = document.getElementById('finishBox');
+  fb.classList.add('show');
+  document.getElementById('finalScore').textContent = correct;
+  document.getElementById('finalTotal').textContent = shuffled.length;
+  const pct = correct / shuffled.length;
+  let msg = '', emoji = '';
+  if (pct === 1) { emoji = '🏆'; msg = 'ぜんぶせいかい！かんぺき！くだものとやさいはバッチリだね！'; }
+  else if (pct >= 0.8) { emoji = '🌟'; msg = 'とてもよくできました！もう少しで完璧！'; }
+  else if (pct >= 0.6) { emoji = '😊'; msg = 'なかなかいいね！まちがえたところをもう一度みてみよう！'; }
+  else { emoji = '💪'; msg = 'もう一度チャレンジしてみよう！だんだんわかってくるよ！'; }
+  document.getElementById('finishEmoji').textContent = emoji;
+  document.getElementById('finishMsg').textContent = msg;
+  document.getElementById('progressFill').style.width = '100%';
+}
+
+function restart() {
+  current = 0; correct = 0;
+  shuffled = shuffle(foods);
+  document.getElementById('quizSection').style.display = 'block';
+  document.getElementById('finishBox').classList.remove('show');
+  document.getElementById('scoreCorrect').textContent = '0';
+  loadQuestion();
+}
+
+// init
+shuffled = shuffle(foods);
+document.getElementById('scoreTotal').textContent = shuffled.length;
+loadQuestion();
+</script>
+</body>
+</html>
