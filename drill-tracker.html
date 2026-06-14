@@ -198,8 +198,13 @@ function renderDrillSettings() {
   document.getElementById('drill-list-settings').innerHTML = drills.length
     ? drills.map((d,i) => `
       <div class="card" style="padding:10px 12px;margin-bottom:8px;">
-        <div style="display:flex;align-items:center;gap:8px;">
+        <div style="display:flex;align-items:center;gap:4px;">
+          <div style="display:flex;flex-direction:column;gap:2px;margin-right:4px;">
+            <button class="small-btn" style="padding:1px 6px;font-size:10px" onclick="moveDrill(${i},-1)" ${i===0?'disabled':''}>▲</button>
+            <button class="small-btn" style="padding:1px 6px;font-size:10px" onclick="moveDrill(${i},1)" ${i===drills.length-1?'disabled':''}>▼</button>
+          </div>
           <span style="flex:1;font-size:11px;line-height:1.4">${d}</span>
+          <button class="small-btn" style="color:#555" onclick="editDrill(${i})">✏️</button>
           <button class="small-btn" style="color:#ff3b30" onclick="removeDrill(${i})">削除</button>
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
@@ -211,6 +216,40 @@ function renderDrillSettings() {
         </div>
       </div>`).join('')
     : '<div class="empty">教材が登録されていません</div>';
+}
+
+function moveDrill(i, dir) {
+  const j = i + dir;
+  if (j < 0 || j >= drills.length) return;
+  [drills[i], drills[j]] = [drills[j], drills[i]];
+  save();
+  populateSelects();
+  renderDrillSettings();
+}
+
+function editDrill(i) {
+  const current = drills[i];
+  const newName = prompt('教材名を変更してください', current);
+  if (!newName || newName.trim() === '') return;
+  const trimmed = newName.trim();
+  if (drills.includes(trimmed) && trimmed !== current) {
+    alert('すでに同じ名前の教材があります'); return;
+  }
+  // ページ数データも引き継ぐ
+  let drillPages = JSON.parse(localStorage.getItem('sj_drillPages') || '{}');
+  if (drillPages[current] !== undefined) {
+    drillPages[trimmed] = drillPages[current];
+    delete drillPages[current];
+    localStorage.setItem('sj_drillPages', JSON.stringify(drillPages));
+  }
+  // 苦手リスト・学習ログの教材名も更新
+  weaks.forEach(w => { if (w.drill === current) w.drill = trimmed; });
+  logs.forEach(l => { if (l.drill === current) l.drill = trimmed; });
+  drills[i] = trimmed;
+  save();
+  populateSelects();
+  renderDrillSettings();
+  alert('変更しました！');
 }
 
 function addDrill() {
@@ -326,8 +365,8 @@ function renderWeak() {
       '<button class="small-btn" style="color:#ff3b30" onclick="deleteWeak(' + w.id + ')">削除</button></div>' +
       '<div class="pages-wrap">' + pages + '</div>' +
       badge +
-      (isDone ? '' : ' <span class="meta" style="font-size:11px">　📅 <button class="small-btn" style="color:#555;font-size:11px;padding:0" onclick="openRemindModal(' + w.id + ')">日付変更</button>　記録日：' + fmt(w.date) + '</span>') +
-      (isDone ? '<div class="meta" style="font-size:11px">記録日：' + fmt(w.date) + '</div>' : '') +
+      (isDone ? '' : ' <span class="meta" style="font-size:11px">　📅 <button class="small-btn" style="color:#555;font-size:11px;padding:0" onclick="openRemindModal(' + w.id + ')">日付変更</button><span style="font-size:9px;color:#aaa">　記録日：' + fmt(w.date) + '</span>') +
+      (isDone ? '<div class="meta" style="font-size:9px">記録日：' + fmt(w.date) + '</div>' : '') +
       '<div style="margin-top:6px">' + doneBtn + '</div>' +
       (w.memo ? '<div class="memo">' + w.memo + '</div>' : '') +
       '</div>';
