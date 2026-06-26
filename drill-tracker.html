@@ -341,7 +341,7 @@ function renderWeak() {
   function makeCard(w, isDone) {
     const d = daysDiff(w.remindDate);
     const badge = isDone
-      ? '<span class="badge" style="background:#e8e8e8;color:#888">✅ 完了済み（' + fmt(w.remindDate) + '）</span>'
+      ? '<span class="badge" style="background:#e8e8e8;color:#888">✅ 完了済み（' + fmt(w.doneDate || w.remindDate) + '）</span>'
       : d <= 0
       ? '<span class="badge badge-red">復習してね！（' + fmt(w.remindDate) + '）</span>'
       : d <= 7
@@ -377,7 +377,7 @@ function renderWeak() {
     : '<div class="empty">記録がありません</div>';
 
   // 完了リスト
-  const doneList = weaks.filter(w => w.done);
+  const doneList = weaks.filter(w => w.done).sort((a,b) => new Date(b.doneDate||b.remindDate) - new Date(a.doneDate||a.remindDate));
   const doneHtml = doneList.length
     ? '<button class="done-toggle" onclick="toggleDoneList()">✅ 完了済み ' + doneList.length + '件 ▼</button>' +
       '<div id="done-list" style="display:none">' + doneList.map(w => makeCard(w, true)).join('') + '</div>'
@@ -401,8 +401,10 @@ function togglePage(id, pg) {
   const donePagesSet = new Set(w.donePages);
   if (allPages.every(p => donePagesSet.has(p))) {
     w.done = true;
+    if (!w.doneDate) w.doneDate = new Date().toISOString();
   } else {
     w.done = false;
+    w.doneDate = null;
   }
   save();
   renderWeak();
@@ -410,7 +412,7 @@ function togglePage(id, pg) {
 
 function markDone(id) {
   const w = weaks.find(w => w.id === id);
-  if (w) { w.done = true; save(); renderWeak(); }
+  if (w) { w.done = true; w.doneDate = new Date().toISOString(); save(); renderWeak(); }
 }
 function undoDone(id) {
   const w = weaks.find(w => w.id === id);
