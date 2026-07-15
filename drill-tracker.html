@@ -56,6 +56,12 @@
   .log-date-header { font-size: 13px; font-weight: 600; color: #555; margin: 14px 0 6px; }
   .card-done { opacity: 0.45; background: #f5f5f7; }
   .done-toggle { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 6px 0; width: 100%; text-align: center; margin-top: 4px; }
+  .backup-banner { display: none; background: #fff3cd; color: #7d5a00; font-size: 11px; padding: 8px 16px; align-items: center; justify-content: space-between; gap: 8px; }
+  .backup-banner.show { display: flex; }
+  .backup-banner .msg { flex: 1; line-height: 1.4; }
+  .backup-banner button { flex-shrink: 0; font-size: 11px; font-weight: 600; padding: 6px 12px; border-radius: 20px; border: none; background: #7d5a00; color: #fff; cursor: pointer; }
+  .backup-banner .dismiss { background: none; color: #7d5a00; padding: 6px 4px; font-weight: 400; }
+  .last-backup-note { font-size: 11px; color: #888; margin-top: 8px; text-align: center; }
 </style>
 </head>
 <body>
@@ -69,6 +75,12 @@
     <button class="tab" onclick="switchTab('settings')">設定</button>
   </div>
 </header>
+
+<div class="backup-banner" id="backup-banner">
+  <div class="msg" id="backup-banner-msg">最後のバックアップから日数が経っています。エクスポートしておきましょう。</div>
+  <button onclick="exportData()">今すぐエクスポート</button>
+  <button class="dismiss" onclick="dismissBackupBanner()">✕</button>
+</div>
 
 <!-- 記録する -->
 <div id="section-record" class="section active">
@@ -134,6 +146,9 @@
   <hr class="divider">
   <div class="section-title">データ管理</div>
   <button class="btn btn-secondary" onclick="exportData()">データをエクスポート（JSON）</button>
+  <button class="btn btn-secondary" onclick="document.getElementById('import-file-input').click()">データをインポート（JSON）</button>
+  <input type="file" id="import-file-input" accept="application/json" style="display:none" onchange="importData(event)">
+  <div class="last-backup-note" id="last-backup-note"></div>
   <button class="btn btn-danger" style="margin-top:8px" onclick="clearAll()">すべてのデータを削除</button>
 </div>
 
@@ -172,6 +187,9 @@ const DEFAULT_DRILLS = [
   'ひとりでとっくん365日 03基礎2-A',
   'ひとりでとっくん365日 04基礎2-B',
 ];
+
+// バックアップリマインダーの間隔（日数）
+const BACKUP_REMINDER_DAYS = 7;
 
 let drills = JSON.parse(localStorage.getItem('sj_drills') || 'null') || [...DEFAULT_DRILLS];
 drills.sort((a, b) => a.localeCompare(b, 'ja'));
@@ -585,13 +603,93 @@ function renderProgress() {
     : '<div class="empty">設定タブで各ドリルの総ページ数を入力してください</div>';
 }
 
+/* ---------- バックアップ（エクスポート／インポート／リマインダー） ---------- */
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+function todayStamp() {
+  const d = new Date();
+  return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate());
+}
+
 function exportData() {
   const blob = new Blob([JSON.stringify({drills, weaks, logs}, null, 2)], {type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'drill-tracker-backup.json';
+  a.download = 'drill-tracker-backup-' + todayStamp() + '.json';
   a.click();
+  // バックアップ完了を記録し、バナーを消す
+  localStorage.setItem('sj_lastBackup', new Date().toISOString());
+  dismissBackupBanner();
+  renderLastBackupNote();
 }
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    let data;
+    try {
+      data = JSON.parse(e.target.result);
+    } catch (err) {
+      alert('ファイルの読み込みに失敗しました。正しいバックアップファイルか確認してください。');
+      return;
+    }
+    if (!data || (!data.drills && !data.weaks && !data.logs)) {
+      alert('バックアップファイルの形式が正しくないようです。');
+      return;
+    }
+    openModal('データを復元しますか？', '現在のデータは上書きされます。この操作は取り消せません。', () => {
+      drills = data.drills || [...DEFAULT_DRILLS];
+      weaks  = data.weaks  || [];
+      logs   = data.logs   || [];
+      save();
+      localStorage.setItem('sj_lastBackup', new Date().toISOString());
+      populateSelects();
+      renderDrillSettings();
+      renderWeak();
+      renderLog();
+      dismissBackupBanner();
+      renderLastBackupNote();
+      alert('データを復元しました！');
+    });
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function dismissBackupBanner() {
+  document.getElementById('backup-banner').classList.remove('show');
+}
+
+function checkBackupReminder() {
+  const last = localStorage.getItem('sj_lastBackup');
+  const banner = document.getElementById('backup-banner');
+  const msg = document.getElementById('backup-banner-msg');
+  if (!last) {
+    // 記録・ログが何かあるのに一度もバックアップしていない場合のみ表示
+    if (drills.length || weaks.length || logs.length) {
+      msg.textContent = 'まだ一度もバックアップをとっていません。機種変更に備えて、エクスポートしておきましょう。';
+      banner.classList.add('show');
+    }
+    return;
+  }
+  const days = Math.floor((new Date() - new Date(last)) / 86400000);
+  if (days >= BACKUP_REMINDER_DAYS) {
+    msg.textContent = '最後のバックアップから' + days + '日経っています。エクスポートしておきましょう。';
+    banner.classList.add('show');
+  }
+}
+
+function renderLastBackupNote() {
+  const last = localStorage.getItem('sj_lastBackup');
+  const note = document.getElementById('last-backup-note');
+  note.textContent = last ? '最終バックアップ：' + fmt(last) : 'まだバックアップをとっていません';
+}
+
+/* ---------------------------------------------------------------- */
+
 function clearAll() {
   openModal('全データを削除しますか？', 'すべての記録が消えます。この操作は取り消せません。', () => {
     weaks = []; logs = []; drills = [...DEFAULT_DRILLS]; save(); init();
@@ -623,12 +721,13 @@ function switchTab(tab) {
   document.getElementById('section-' + tab).classList.add('active');
   if (tab === 'weak') renderWeak();
   if (tab === 'log') renderLog();
-  if (tab === 'settings') renderDrillSettings();
+  if (tab === 'settings') { renderDrillSettings(); renderLastBackupNote(); }
 }
 
 function init() {
   document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
   populateSelects();
+  checkBackupReminder();
 }
 
 init();
