@@ -542,14 +542,19 @@ function hideProgress() {
 function renderProgress() {
   const drillPages = JSON.parse(localStorage.getItem('sj_drillPages') || '{}');
 
-  // 学習ログからドリルごとのやったページを集計
+  // 学習ログからドリルごとのやったページと回数を集計
   const done = {};
+  const pageCount = {}; // ページごとの学習回数
   logs.forEach(l => {
     if (!l.drill || !l.pages) return;
     if (!done[l.drill]) done[l.drill] = new Set();
+    if (!pageCount[l.drill]) pageCount[l.drill] = {};
     l.pages.split(',').forEach(p => {
       const n = parseInt(p.trim());
-      if (!isNaN(n)) done[l.drill].add(n);
+      if (!isNaN(n)) {
+        done[l.drill].add(n);
+        pageCount[l.drill][n] = (pageCount[l.drill][n] || 0) + 1;
+      }
     });
   });
 
@@ -584,13 +589,25 @@ function renderProgress() {
       ? allPages.filter(p => done[d] && done[d].has(p) && weakMap[d].has(p))
       : [];
 
+    const countLabel = (p) => {
+      const c = pageCount[d] && pageCount[d][p] ? pageCount[d][p] : 0;
+      return c > 1 ? ` ×${c}` : '';
+    };
+
     const notDonePills = notDone.length > 0
       ? notDone.map(p => `<span ${pillStyle('#555','#f0f0f0')}>p.${p}</span>`).join('')
       : '<span style="font-size:10px;color:#1a7a3c">すべて着手済み🎉</span>';
 
     const weakPills = weakPages.length > 0
-      ? weakPages.map(p => `<span ${pillStyle('#c0392b','#ffe5e5')}>p.${p}</span>`).join('')
+      ? weakPages.map(p => `<span ${pillStyle('#c0392b','#ffe5e5')}>p.${p}${countLabel(p)}</span>`).join('')
       : '';
+
+    // 着手済みで苦手でないページの回数（2回以上のみ表示）
+    const doneNotWeakPills = donePages
+      .filter(p => !weakMap[d] || !weakMap[d].has(p))
+      .filter(p => pageCount[d] && pageCount[d][p] > 1)
+      .map(p => `<span ${pillStyle('#1a7a3c','#e5f5ec')}>p.${p} ×${pageCount[d][p]}</span>`)
+      .join('');
 
     // 完了率：やったページ数 ÷（総ページ数）で計算、苦手未完了は完了扱いしない
     const trulyDone = donePages.filter(p => !weakMap[d] || !weakMap[d].has(p));
@@ -603,8 +620,9 @@ function renderProgress() {
       <div style="font-size:10px;font-weight:600;line-height:1.4;margin-bottom:6px">${d}</div>
       <div style="font-size:10px;color:#555;font-family:monospace;letter-spacing:1px">${trulyBar}</div>
       <div style="font-size:10px;color:#888;margin-top:3px;margin-bottom:6px">${trulyDoneCount}/${total}ページ完了（${trulyPct}%）</div>
-      <div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:${weakPages.length>0?'6px':'0'}">${notDonePills}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:${weakPages.length>0||doneNotWeakPills?'6px':'0'}">${notDonePills}</div>
       ${weakPages.length > 0 ? `<div style="display:flex;flex-wrap:wrap;gap:2px;margin-top:2px">${weakPills}</div>` : ''}
+      ${doneNotWeakPills ? `<div style="display:flex;flex-wrap:wrap;gap:2px;margin-top:2px">${doneNotWeakPills}</div>` : ''}
     </div>`;
   });
 
