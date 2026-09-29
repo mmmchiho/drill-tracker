@@ -26,7 +26,7 @@
   .btn-danger { background: #fff; border: 0.5px solid #ff3b30; color: #ff3b30; }
   .card { background: #fff; border-radius: 14px; padding: 14px; margin-bottom: 10px; border: 0.5px solid #e5e5e5; font-size: 11px; }
   .card-row { display: flex; justify-content: space-between; align-items: flex-start; }
-  .drill-name { font-size: 11px; font-weight: 600; flex: 1; line-height: 1.4; }
+  .drill-name { font-size: 9px; font-weight: 600; flex: 1; line-height: 1.4; }
   .small-btn { font-size: 11px; color: #888; background: none; border: none; cursor: pointer; padding: 2px 6px; white-space: nowrap; }
   .pages-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
   .pill { font-size: 11px; padding: 3px 10px; border-radius: 20px; }
@@ -37,7 +37,7 @@
   .badge-yellow { background: #fff3cd; color: #7d5a00; }
   .badge-green { background: #e5f5ec; color: #1a7a3c; }
   .meta { font-size: 11px; color: #999; margin-top: 6px; }
-  .memo { font-size: 11px; color: #666; margin-top: 8px; padding-top: 8px; border-top: 0.5px solid #eee; }
+  .memo { font-size: 9px; color: #666; margin-top: 8px; padding-top: 8px; border-top: 0.5px solid #eee; }
   .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
   .stat-box { background: #fff; border-radius: 12px; padding: 14px; text-align: center; border: 0.5px solid #e5e5e5; }
   .stat-num { font-size: 26px; font-weight: 700; }
@@ -289,8 +289,9 @@ function renderDrillSettings() {
         <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
           <span style="font-size:11px;color:#888;white-space:nowrap">総ページ数：</span>
           <input type="number" min="1" max="200" value="${drillPages[d]||''}" placeholder="例：32"
+            data-drill="${d.replace(/"/g,'&quot;')}"
             style="width:80px;padding:5px 8px;font-size:12px;border:0.5px solid #ccc;border-radius:8px;"
-            onchange="saveDrillPages('${d.replace(/'/g,"\'")}', this.value)">
+            onchange="saveDrillPages(this.dataset.drill, this.value)">
           <span style="font-size:11px;color:#888">ページ</span>
         </div>
       </div>`).join('')
@@ -728,7 +729,7 @@ function renderProgress() {
     const trulyBar = '█'.repeat(trulyBarFilled) + '░'.repeat(20 - trulyBarFilled);
 
     return `<div class="card" style="margin-bottom:10px">
-      <div style="font-size:10px;font-weight:600;line-height:1.4;margin-bottom:6px">${d}</div>
+      <div style="font-size:9px;font-weight:600;line-height:1.4;margin-bottom:6px">${d}</div>
       <div style="font-size:10px;color:#555;font-family:monospace;letter-spacing:1px">${trulyBar}</div>
       <div style="font-size:10px;color:#888;margin-top:3px;margin-bottom:6px">${trulyDoneCount}/${total}ページ完了（${trulyPct}%）</div>
       <div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:${weakPages.length>0||doneNotWeakPills?'6px':'0'}">${notDonePills}</div>
@@ -784,7 +785,7 @@ function renderGood() {
     const pages = g.pages.split(',').map(p => '<span class="pill pill-blue">p.' + p.trim() + '</span>').join('');
     return '<div class="card" style="margin-bottom:10px">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start">' +
-      '<div style="font-size:11px;font-weight:600;flex:1;line-height:1.4">' + g.drill + '</div>' +
+      '<div style="font-size:9px;font-weight:600;flex:1;line-height:1.4">' + g.drill + '</div>' +
       '<button class="small-btn" style="color:#ff3b30" onclick="deleteGood(' + g.id + ')">削除</button></div>' +
       '<div class="pages-wrap" style="margin-top:6px">' + pages + '</div>' +
       (g.timing ? '<div style="font-size:10px;color:#1a5ca8;margin-top:6px">🕐 ' + g.timing + '</div>' : '') +
