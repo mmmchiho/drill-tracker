@@ -219,12 +219,59 @@ function save() {
   localStorage.setItem('sj_logs',   JSON.stringify(logs));
 }
 
+function getGroupLabel(name) {
+  if (/新版ばっちりくん|\(新版\)ばっちりくん/.test(name)) return '新版ばっちりくん';
+  if (/ばっちりくん/.test(name)) return '旧ばっちりくん';
+  if (/ひとりでとっくん単元別/.test(name)) return 'ひとりでとっくん単元別';
+  if (/ひとりでとっくん365日/.test(name)) return 'ひとりでとっくん365日';
+  if (/ピンポンワーク/.test(name)) return 'ピンポンワーク';
+  return 'その他';
+}
+
+function getShortLabel(name) {
+  // グループのプレフィックス部分を除去して数字から始まる部分を返す
+  const prefixes = [
+    /^\(新版\)ばっちりくんドリル[^\d]*/,
+    /^新版ばっちりくんドリル[^\d]*/,
+    /^ばっちりくんドリル[^\d]*/,
+    /^ひとりでとっくん単元別[^\d]*/,
+    /^ひとりでとっくん365日[^\d]*/,
+    /^ピンポンワーク[^\d]*/,
+  ];
+  for (const re of prefixes) {
+    const s = name.replace(re, '');
+    if (s !== name) return s;
+  }
+  return name;
+}
+
+function buildGroupedOptions(cur) {
+  const groups = {};
+  const groupOrder = ['新版ばっちりくん','旧ばっちりくん','ひとりでとっくん単元別','ひとりでとっくん365日','ピンポンワーク','その他'];
+  drills.forEach(d => {
+    const g = getGroupLabel(d);
+    if (!groups[g]) groups[g] = [];
+    groups[g].push(d);
+  });
+  let html = '<option value="">-- 選択 --</option>';
+  groupOrder.forEach(g => {
+    if (!groups[g]) return;
+    html += `<optgroup label="${g}">`;
+    groups[g].forEach(d => {
+      const label = getShortLabel(d);
+      html += `<option value="${d}"${d===cur?' selected':''}>${label}</option>`;
+    });
+    html += '</optgroup>';
+  });
+  return html;
+}
+
 function populateSelects() {
   ['log-drill', 'weak-drill', 'good-drill'].forEach(id => {
     const s = document.getElementById(id);
     if (!s) return;
     const cur = s.value;
-    s.innerHTML = '<option value="">-- 選択 --</option>' + drills.map(d => `<option${d===cur?' selected':''}>${d}</option>`).join('');
+    s.innerHTML = buildGroupedOptions(cur);
   });
 }
 
