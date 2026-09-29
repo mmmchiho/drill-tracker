@@ -220,8 +220,8 @@ function save() {
 }
 
 function getGroupLabel(name) {
-  if (/新版ばっちりくん|\(新版\)ばっちりくん/.test(name)) return '新版ばっちりくん';
-  if (/ばっちりくん/.test(name)) return '旧ばっちりくん';
+  if (/\(新版\)ばっちりくん|新版ばっちりくん/.test(name)) return '新版ばっちりくん';
+  if (/\(旧版\)ばっちりくん|^ばっちりくん/.test(name)) return '旧ばっちりくん';
   if (/ひとりでとっくん単元別/.test(name)) return 'ひとりでとっくん単元別';
   if (/ひとりでとっくん365日/.test(name)) return 'ひとりでとっくん365日';
   if (/ピンポンワーク/.test(name)) return 'ピンポンワーク';
@@ -229,18 +229,17 @@ function getGroupLabel(name) {
 }
 
 function getShortLabel(name) {
-  // グループのプレフィックス部分を除去して数字から始まる部分を返す
-  const prefixes = [
-    /^\(新版\)ばっちりくんドリル[^\d]*/,
-    /^新版ばっちりくんドリル[^\d]*/,
-    /^ばっちりくんドリル[^\d]*/,
-    /^ひとりでとっくん単元別[^\d]*/,
-    /^ひとりでとっくん365日[^\d]*/,
-    /^ピンポンワーク[^\d]*/,
-  ];
-  for (const re of prefixes) {
-    const s = name.replace(re, '');
-    if (s !== name) return s;
+  // ばっちりくん系：番号以降を返す（例：「(新版)ばっちりくんドリル　65. 位置〜」→「65. 位置〜」）
+  let m = name.match(/^[^\d]*(\d+\..*)/);
+  if (m && /ばっちりくん/.test(name)) return m[1].trim();
+  // ひとりでとっくん系：番号以降
+  if (/ひとりでとっくん/.test(name)) {
+    m = name.match(/^[^\d]*(\d+.*)/);
+    if (m) return m[1].trim();
+  }
+  // ピンポンワーク：「ピンポンワーク　年中6月」→「年中6月」
+  if (/ピンポンワーク/.test(name)) {
+    return name.replace(/^ピンポンワーク[\s　]*/, '').trim() || name;
   }
   return name;
 }
@@ -299,8 +298,8 @@ function renderDrillSettings() {
 }
 
 function getGroup(name) {
-  if (/新版ばっちりくん|\(新版\)ばっちりくん/.test(name)) return 0;
-  if (/ばっちりくん/.test(name)) return 1;
+  if (/\(新版\)ばっちりくん|新版ばっちりくん/.test(name)) return 0;
+  if (/\(旧版\)ばっちりくん|^ばっちりくん/.test(name)) return 1;
   if (/ひとりでとっくん単元別/.test(name)) return 2;
   if (/ひとりでとっくん365日/.test(name)) return 3;
   if (/ピンポンワーク/.test(name)) return 4;
@@ -594,7 +593,7 @@ function renderLog() {
             '</div>';
         }
         const drillPart = l.drill
-          ? '<div style="font-size:10px;color:#555;line-height:1.4">' + l.drill + '</div>' +
+          ? '<div style="font-size:9px;color:#555;line-height:1.4">' + l.drill + '</div>' +
             (l.pages ? '<div class="pages-wrap">' + l.pages.split(',').map(p => '<span class="pill pill-gray">p.' + p.trim() + '</span>').join('') + '</div>' : '')
           : '';
         const freePart = l.free ? '<div style="font-size:11px;color:#555;margin-top:6px">' + l.free + '</div>' : '';
