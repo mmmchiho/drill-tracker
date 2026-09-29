@@ -156,6 +156,7 @@
 <div id="section-settings" class="section">
   <div class="section-title">教材リストを管理</div>
   <div id="drill-list-settings"></div>
+  <button class="btn btn-secondary" style="margin-top:8px;font-size:12px" onclick="sortAllDrills()">🔤 シリーズ・番号順に並び替え</button>
   <label class="lbl" style="margin-top:16px">新しい教材を追加</label>
   <input type="text" id="new-drill-name" placeholder="例：こぐま会 ひとりでとっくん 6">
   <button class="btn btn-secondary" onclick="addDrill()">追加する</button>
@@ -250,6 +251,28 @@ function renderDrillSettings() {
     : '<div class="empty">教材が登録されていません</div>';
 }
 
+function getGroup(name) {
+  if (/新版ばっちりくん|\(新版\)ばっちりくん/.test(name)) return 0;
+  if (/ばっちりくん/.test(name)) return 1;
+  if (/ひとりでとっくん単元別/.test(name)) return 2;
+  if (/ひとりでとっくん365日/.test(name)) return 3;
+  if (/ピンポンワーク/.test(name)) return 4;
+  return 5;
+}
+
+function getNum(name) {
+  const m = name.match(/(\d+)/);
+  return m ? parseInt(m[1]) : 999;
+}
+
+function sortDrills() {
+  drills.sort((a, b) => {
+    const ga = getGroup(a), gb = getGroup(b);
+    if (ga !== gb) return ga - gb;
+    return getNum(a) - getNum(b);
+  });
+}
+
 function moveDrill(i, dir) {
   const j = i + dir;
   if (j < 0 || j >= drills.length) return;
@@ -257,6 +280,36 @@ function moveDrill(i, dir) {
   save();
   populateSelects();
   renderDrillSettings();
+}
+
+function getDrillGroup(name) {
+  if (/新版ばっちりくん|\(新版\)ばっちりくん/i.test(name)) return 0;
+  if (/ばっちりくん/i.test(name)) return 1;
+  if (/ひとりでとっくん単元別/i.test(name)) return 2;
+  if (/ひとりでとっくん365日/i.test(name)) return 3;
+  if (/ピンポンワーク/i.test(name)) return 4;
+  return 5;
+}
+
+function getDrillNumber(name) {
+  const m = name.match(/[\s\.\-](\d+)[\.\s]/);
+  if (m) return parseInt(m[1]);
+  const m2 = name.match(/(\d+)/);
+  return m2 ? parseInt(m2[1]) : 999;
+}
+
+function drillSortFn(a, b) {
+  const ga = getDrillGroup(a), gb = getDrillGroup(b);
+  if (ga !== gb) return ga - gb;
+  return getDrillNumber(a) - getDrillNumber(b);
+}
+
+function sortAllDrills() {
+  drills.sort(drillSortFn);
+  save();
+  populateSelects();
+  renderDrillSettings();
+  alert('並び替えました！');
 }
 
 function jumpDrill(i) {
@@ -290,6 +343,7 @@ function editDrill(i) {
   weaks.forEach(w => { if (w.drill === current) w.drill = trimmed; });
   logs.forEach(l => { if (l.drill === current) l.drill = trimmed; });
   drills[i] = trimmed;
+  sortDrills();
   save();
   populateSelects();
   renderDrillSettings();
@@ -301,7 +355,7 @@ function addDrill() {
   if (!name) { alert('教材名を入力してください'); return; }
   if (drills.includes(name)) { alert('すでに登録されています'); return; }
   drills.push(name);
-  drills.sort((a, b) => a.localeCompare(b, 'ja'));
+  sortDrills();
   save();
   document.getElementById('new-drill-name').value = '';
   populateSelects();
