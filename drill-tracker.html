@@ -233,11 +233,9 @@ function renderDrillSettings() {
     ? drills.map((d,i) => `
       <div class="card" style="padding:10px 12px;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:4px;">
-          <div style="display:flex;flex-direction:column;gap:2px;margin-right:4px;">
-            <button class="small-btn" style="padding:1px 6px;font-size:10px" onclick="moveDrill(${i},-1)" ${i===0?'disabled':''}>▲</button>
-            <button class="small-btn" style="padding:1px 6px;font-size:10px" onclick="moveDrill(${i},1)" ${i===drills.length-1?'disabled':''}>▼</button>
-          </div>
+          <span style="font-size:10px;color:#aaa;min-width:16px">${i+1}</span>
           <span style="flex:1;font-size:11px;line-height:1.4">${d}</span>
+          <button class="small-btn" style="color:#555" onclick="jumpDrill(${i})">→</button>
           <button class="small-btn" style="color:#555" onclick="editDrill(${i})">✏️</button>
           <button class="small-btn" style="color:#ff3b30" onclick="removeDrill(${i})">削除</button>
         </div>
@@ -256,6 +254,18 @@ function moveDrill(i, dir) {
   const j = i + dir;
   if (j < 0 || j >= drills.length) return;
   [drills[i], drills[j]] = [drills[j], drills[i]];
+  save();
+  populateSelects();
+  renderDrillSettings();
+}
+
+function jumpDrill(i) {
+  const to = parseInt(prompt(`「${drills[i]}」を何番目に移動しますか？（1〜${drills.length}）`, i + 1));
+  if (isNaN(to) || to < 1 || to > drills.length) return;
+  const j = to - 1;
+  if (j === i) return;
+  const item = drills.splice(i, 1)[0];
+  drills.splice(j, 0, item);
   save();
   populateSelects();
   renderDrillSettings();
@@ -291,6 +301,7 @@ function addDrill() {
   if (!name) { alert('教材名を入力してください'); return; }
   if (drills.includes(name)) { alert('すでに登録されています'); return; }
   drills.push(name);
+  drills.sort((a, b) => a.localeCompare(b, 'ja'));
   save();
   document.getElementById('new-drill-name').value = '';
   populateSelects();
@@ -693,7 +704,8 @@ function deleteGood(id) {
 }
 
 function exportData() {
-  const blob = new Blob([JSON.stringify({drills, weaks, logs}, null, 2)], {type:'application/json'});
+  const goods = JSON.parse(localStorage.getItem('sj_goods') || '[]');
+  const blob = new Blob([JSON.stringify({drills, weaks, logs, goods}, null, 2)], {type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'drill-tracker-backup-' + todayStamp() + '.json';
