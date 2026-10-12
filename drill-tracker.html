@@ -734,7 +734,11 @@ function renderProgress() {
       <div style="font-size:10px;color:#888;margin-top:3px;margin-bottom:6px">${trulyDoneCount}/${total}ページ完了（${trulyPct}%）</div>
       <div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:${weakPages.length>0||doneNotWeakPills?'6px':'0'}">${notDonePills}</div>
       ${weakPages.length > 0 ? `<div style="display:flex;flex-wrap:wrap;gap:2px;margin-top:2px">${weakPills}</div>` : ''}
-      ${doneNotWeakPills ? `<div style="display:flex;flex-wrap:wrap;gap:2px;margin-top:2px">${doneNotWeakPills}</div>` : ''}
+      ${doneNotWeakPills ? `
+        <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'flex':'none';this.textContent=this.textContent.includes('▼')?this.textContent.replace('▼','▲'):this.textContent.replace('▲','▼')"
+          style="font-size:10px;color:#888;background:none;border:none;cursor:pointer;padding:4px 0;text-align:left;margin-top:4px">🔄 反復済み ▼</button>
+        <div style="display:none;flex-wrap:wrap;gap:2px;margin-top:2px">${doneNotWeakPills}</div>
+      ` : ''}
     </div>`;
   });
 
