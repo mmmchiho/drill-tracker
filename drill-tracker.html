@@ -128,6 +128,7 @@
 <div id="section-log" class="section">
   <div id="log-view">
     <button class="btn btn-secondary" style="margin-bottom:12px;font-size:12px;padding:9px" onclick="showProgress()">📊 進捗を確認する →</button>
+    <div id="log-calendar"></div>
     <div id="log-list"></div>
   </div>
   <div id="progress-view" style="display:none">
@@ -575,10 +576,81 @@ function toggleDoneList() {
   }
 }
 
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+let selectedLogDate = null;
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+function renderCalendar() {
+  const el = document.getElementById('log-calendar');
+  if (!el) return;
+  const logDates = new Set(logs.map(l => l.date).filter(Boolean));
+  const startDow = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const t = new Date();
+  const todayKey = t.getFullYear() + '-' + pad2(t.getMonth() + 1) + '-' + pad2(t.getDate());
+
+  let cells = '';
+  for (let i = 0; i < startDow; i++) cells += '<div></div>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = calYear + '-' + pad2(calMonth + 1) + '-' + pad2(d);
+    const has = logDates.has(key);
+    const sel = key === selectedLogDate;
+    const isToday = key === todayKey;
+    const bg = sel ? '#1c1c1e' : 'transparent';
+    const col = sel ? '#fff' : '#1c1c1e';
+    const border = isToday && !sel ? '1px solid #1c1c1e' : '1px solid transparent';
+    const dot = has
+      ? '<span style="display:block;width:4px;height:4px;border-radius:50%;background:' + (sel ? '#fff' : '#1a5ca8') + ';margin-top:2px"></span>'
+      : '<span style="display:block;width:4px;height:4px;margin-top:2px"></span>';
+    cells += '<button data-date="' + key + '" onclick="selectLogDate(this.dataset.date)" ' +
+      'style="height:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;' +
+      'font-size:11px;border-radius:10px;cursor:pointer;background:' + bg + ';color:' + col + ';border:' + border + ';padding:0">' +
+      d + dot + '</button>';
+  }
+
+  const dows = ['日','月','火','水','木','金','土'].map((w, i) =>
+    '<div style="text-align:center;font-size:9px;color:' + (i === 0 ? '#c0392b' : i === 6 ? '#1a5ca8' : '#888') + '">' + w + '</div>'
+  ).join('');
+
+  el.innerHTML =
+    '<div style="background:#fff;border:0.5px solid #e5e5e5;border-radius:14px;padding:10px;margin-bottom:12px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">' +
+        '<button class="small-btn" style="font-size:14px;padding:4px 12px" onclick="changeMonth(-1)">◀</button>' +
+        '<div style="font-size:12px;font-weight:600">' + calYear + '年' + (calMonth + 1) + '月</div>' +
+        '<button class="small-btn" style="font-size:14px;padding:4px 12px" onclick="changeMonth(1)">▶</button>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px">' + dows + cells + '</div>' +
+      (selectedLogDate
+        ? '<button class="small-btn" style="display:block;margin:8px auto 0;font-size:11px;color:#1a5ca8" onclick="selectLogDate(null)">すべての日を表示</button>'
+        : '<div style="text-align:center;font-size:9px;color:#aaa;margin-top:8px">日付をタップするとその日の学習内容を表示します</div>') +
+    '</div>';
+}
+
+function changeMonth(delta) {
+  calMonth += delta;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  renderCalendar();
+}
+
+function selectLogDate(key) {
+  selectedLogDate = (key && key !== selectedLogDate) ? key : null;
+  renderLog();
+}
+
 function renderLog() {
-  if (!logs.length) { document.getElementById('log-list').innerHTML = '<div class="empty">学習ログがありません</div>'; return; }
+  renderCalendar();
+  const listEl = document.getElementById('log-list');
+  if (!logs.length) { listEl.innerHTML = '<div class="empty">学習ログがありません</div>'; return; }
+  let targetLogs = logs;
+  if (selectedLogDate) {
+    targetLogs = logs.filter(l => l.date === selectedLogDate);
+    if (!targetLogs.length) { listEl.innerHTML = '<div class="empty">この日の学習ログはありません</div>'; return; }
+  }
   const grouped = {};
-  logs.forEach(l => { const k = l.date || '日付未設定'; if (!grouped[k]) grouped[k] = []; grouped[k].push(l); });
+  targetLogs.forEach(l => { const k = l.date || '日付未設定'; if (!grouped[k]) grouped[k] = []; grouped[k].push(l); });
   document.getElementById('log-list').innerHTML = Object.entries(grouped)
     .sort((a,b) => b[0].localeCompare(a[0]))
     .map(([date, items]) => {
