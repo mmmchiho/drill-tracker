@@ -43,9 +43,9 @@ textarea{resize:vertical}
 label.flabel{display:block;font-size:12px;color:var(--sub);margin:10px 0 4px;font-weight:600}
 /* bottom tabs */
 nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;z-index:60;padding-bottom:env(safe-area-inset-bottom)}
-nav.tabs button{flex:1;background:none;border:none;color:var(--sub);font-size:15px;font-weight:600;padding:11px 0 9px;position:relative;min-height:52px}
+nav.tabs button{flex:1;background:none;border:none;color:var(--sub);font-size:17px;font-weight:600;padding:12px 0 10px;position:relative;min-height:54px}
 nav.tabs button.on{color:var(--teal)}
-.badge{position:absolute;top:3px;right:calc(50% - 28px);background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:999px;min-width:19px;height:19px;line-height:19px;padding:0 4px}
+.badge{position:absolute;top:2px;right:calc(50% - 32px);background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:999px;min-width:19px;height:19px;line-height:19px;padding:0 4px}
 /* pills */
 .pill{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:600;margin:0 5px 5px 0;background:#e8ebff;color:#2b3a8f}
 .pill.rev{background:var(--green);color:#fff}
@@ -81,24 +81,25 @@ nav.tabs button.on{color:var(--teal)}
 .sw.b{background:var(--blue)}.sw.r{background:var(--red)}.sw.o{background:none;border:3px solid var(--orange);width:13px;height:13px}
 /* custom dropdown */
 .dd{position:relative}
-.dd-btn{width:100%;text-align:left;background:var(--input);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-height:52px}
+.dd-btn{width:100%;text-align:left;background:var(--input);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-height:52px;color:var(--ink)}
 .dd-btn .s1{display:block;font-size:11.5px;color:var(--sub);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dd-btn .s2{display:block;font-size:14.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dd-list{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);max-height:46vh;overflow:auto;z-index:50;padding:4px}
 .dd-head{font-size:11.5px;color:var(--teal);font-weight:800;padding:8px 8px 3px}
-.dd-item{display:block;width:100%;text-align:left;background:none;border:none;padding:8px;border-radius:8px;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:38px}
+.dd-item{display:block;width:100%;text-align:left;background:none;border:none;padding:8px;border-radius:8px;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:38px;color:var(--ink)}
 .dd-item.sel{background:var(--chip);font-weight:700}
 /* calendar */
 .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
 .cal-head b{font-size:15px}
 .cal-nav{background:var(--card);border:1px solid var(--line);border-radius:9px;width:38px;font-size:16px}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center}
-.cal.dow{font-size:11px;color:var(--sub);padding:3px 0}
-.cal.day{position:relative;border:none;background:none;border-radius:9px;padding:7px 0;font-size:13px;color:var(--ink);min-height:38px}
-.cal.day.sel{background:var(--teal);color:#fff;font-weight:800}
-.cal.day.today{font-weight:800;color:var(--teal)}
-.cal.day.sel.today{color:#fff}
-.cal.dot{position:absolute;left:50%;transform:translateX(-50%);bottom:3px;width:5px;height:5px;border-radius:50%;background:var(--orange)}
+.cal .dow{font-size:11px;color:var(--sub);padding:3px 0}
+.cal .day{position:relative;border:none;background:none;border-radius:9px;padding:6px 0 10px;font-size:13px;color:var(--ink);min-height:38px}
+.cal .day.sel{background:var(--teal);color:#fff;font-weight:800}
+.cal .day.today{font-weight:800;color:var(--teal)}
+.cal .day.sel.today{color:#fff}
+.cal .dot{position:absolute;left:50%;transform:translateX(-50%);bottom:3px;width:6px;height:6px;border-radius:50%;background:var(--blue)}
+.cal .day.sel .dot{background:#fff}
 /* review / good cards */
 .rv-name{font-size:14px;font-weight:700;line-height:1.35}
 .rv-name.pg{color:var(--teal)}
@@ -119,9 +120,10 @@ details.paused-sec summary{font-weight:700;color:#b45309;cursor:pointer;padding:
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom));background:#111;color:#fff;padding:9px 16px;border-radius:999px;font-size:13px;z-index:90;opacity:0;pointer-events:none;transition:opacity.25s}
 .toast.show{opacity:.94}
 .empty{padding:22px 14px;text-align:center;color:var(--sub)}
+.log-series{font-size:11px;color:var(--sub);font-weight:600;margin:0 0 1px}
 .memo-line{white-space:pre-wrap;word-break:break-word}
-.stats-line{font-size:14px}
-.drill-memo{font-size:10px}
+.muted.stats-line{font-size:14px}
+.memo-line.drill-memo{font-size:10px}
 a.dl{color:var(--teal);font-weight:700}
 </style>
 </head>
@@ -415,7 +417,7 @@ function renderLog(){
         var reps=it.changes.filter(function(c){return c.repeat});
         var pills=normal.map(function(c){return '<span class="pill">p.'+c.p+"</span>"}).join("");
         var repHtml=reps.length?'<div style="margin-top:2px"><span class="repeat-ico">🔁</span>'+reps.map(function(c){return '<span class="revtxt">p.'+c.p+"</span>"}).join(" ")+"</div>":"";
-        detail+='<div class="card"><div class="muted" style="margin:0 0 1px">'+esc(seriesOf(name))+'</div><div class="drill-name-lg" title="'+esc(name)+'" style="margin-bottom:6px">'+esc(shortOf(name))+'</div><div class="rowflex" style="align-items:flex-start"><div class="grow">'+pills+repHtml+'</div><button class="xbtn" data-undo="'+it.id+'" aria-label="記録を取り消す">✕</button></div></div>';
+        detail+='<div class="card"><div class="log-series">'+esc(seriesOf(name))+'</div><div class="drill-name-lg" title="'+esc(name)+'" style="margin-bottom:6px">'+esc(shortOf(name))+'</div><div class="rowflex" style="align-items:flex-start"><div class="grow">'+pills+repHtml+'</div><button class="xbtn" data-undo="'+it.id+'" aria-label="記録を取り消す">✕</button></div></div>';
       });
     });
   }
@@ -689,6 +691,7 @@ function renderReview(){
 }
 
 /* ============ GOOD view ============ */
+var gdDrillId=null;
 function renderGood(){
   var el=$("#view-good");
   var t=todayStr();
@@ -696,10 +699,12 @@ function renderGood(){
   var done=S.goods.filter(function(g){return g.done});
   var gGroups={};S.drills.forEach(function(x){var s=seriesOf(x.name);(gGroups[s]=gGroups[s]||[]).push(x)});
   var gOrder=SERIES_ORDER.filter(function(s){return gGroups[s]}).concat(Object.keys(gGroups).filter(function(s){return SERIES_ORDER.indexOf(s)<0}));
-  var gdOpts="";gOrder.forEach(function(s){gGroups[s].slice().sort(cmpDrills).forEach(function(d){gdOpts+='<option value="'+d.id+'">'+esc(seriesOf(d.name)+"｜"+shortOf(d.name))+statusIcon(d)+"</option>"})});
+  if(!gdDrillId||!drillById(gdDrillId))gdDrillId=S.drills.length?S.drills[0].id:null;
+  var gdSel=gdDrillId?drillById(gdDrillId):null;
+  var gdList="";gOrder.forEach(function(s){gdList+='<div class="dd-head">'+esc(s)+"</div>";gGroups[s].slice().sort(cmpDrills).forEach(function(x){gdList+='<button class="dd-item'+(gdSel&&x.id===gdSel.id?" sel":"")+'" data-gdpick="'+x.id+'">'+esc(shortOf(x.name))+statusIcon(x)+"</button>"})});
   var html='<h1>良問</h1>';
   html+='<div class="card"><div style="font-weight:800;margin-bottom:4px">良問を登録</div>'+
-   '<label class="flabel" style="margin-top:2px">教材</label><select id="gdDrill">'+gdOpts+'</select>'+
+   '<label class="flabel" style="margin-top:2px">教材</label><div class="dd"><button class="dd-btn" id="gdDdBtn">'+(gdSel?'<span class="s1">'+esc(seriesOf(gdSel.name))+'</span><span class="s2">'+esc(shortOf(gdSel.name))+statusIcon(gdSel)+'</span>':'<span class="s2">教材がありません</span>')+'</button><div class="dd-list" id="gdDdList" style="display:none">'+gdList+"</div></div>"+
    '<div class="rowflex"><div class="grow"><label class="flabel">ページ（例：12,13）</label><input type="text" id="gdPages" inputmode="numeric" placeholder="12"></div>'+
    '<div class="grow"><label class="flabel">種類</label><select id="gdType"><option>スピードアップ</option><option>季節</option><option>忘れそう</option><option>その他</option></select></div></div>'+
    '<label class="flabel">メモ</label><input type="text" id="gdMemo" placeholder="メモ">'+
@@ -716,8 +721,15 @@ function renderGood(){
   });
   if(done.length)html+='<details class="paused-sec"><summary>取り組み済み（'+done.length+'件）</summary>'+done.map(function(g){var d=drillById(g.drillId);return '<div class="card"><div class="rowflex"><span class="grow small">'+esc(d?shortOf(d.name):"")+" "+g.pages.map(function(p){return "p."+p}).join(" ")+(g.memo?" ・ "+esc(g.memo):"")+'</span><button class="btn subbtn" data-gdundo="'+g.id+'" style="min-height:32px;padding:3px 10px">取り消し</button></div><div class="small muted" style="margin-top:3px">'+(g.created?"記録："+fmtMDShort(g.created):"")+(g.doneDate?" ・ 取り組んだ："+fmtMDShort(g.doneDate):"")+"</div></div>"}).join("")+"</details>";
   el.innerHTML=html;
+  var gdBtn=$("#gdDdBtn"),gdL=$("#gdDdList");
+  if(gdBtn&&gdL){
+    var gdOpen=false;
+    gdBtn.onclick=function(e){e.stopPropagation();gdOpen=!gdOpen;gdL.style.display=gdOpen?"block":"none"};
+    document.addEventListener("click",function(){if(gdOpen){gdOpen=false;gdL.style.display="none"}});
+    gdL.querySelectorAll("[data-gdpick]").forEach(function(b){b.onclick=function(e){e.stopPropagation();gdDrillId=b.dataset.gdpick;renderGood()}});
+  }
   var addBtn=$("#gdAdd");if(addBtn)addBtn.onclick=function(){
-    var did=$("#gdDrill").value;if(!did){toast("先に教材を追加してください");return}
+    var did=gdDrillId||"";if(!did){toast("先に教材を追加してください");return}
     var pages=parsePagesStr($("#gdPages").value);if(!pages.length){toast("ページを入力してください");return}
     S.goods.push({id:uid(),drillId:did,pages:pages,type:$("#gdType").value,memo:$("#gdMemo").value.trim(),timingText:"",remind:$("#gdRemind").value||addMonths(t,1),done:false,created:t});
     save();render();toast("登録しました");
