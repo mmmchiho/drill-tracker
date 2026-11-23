@@ -129,7 +129,7 @@ details.paused-sec summary{font-weight:700;color:#b45309;cursor:pointer;padding:
 .log-series{font-size:11px;color:var(--sub);font-weight:600;margin:0 0 1px}
 .memo-line{white-space:pre-wrap;word-break:break-word}
 .muted.stats-line{font-size:14px !important}
-.memo-line.drill-memo{font-size:10px !important;font-weight:400;line-height:1.5}
+.memo-line.drill-memo{font-size:12px !important;font-weight:400;line-height:1.5}
 a.dl{color:var(--teal);font-weight:700}
 /* dropdown text must stay ink-black (closed label + list items, both tabs) */
 .dd-btn,.dd-btn .s2,.dd-item{color:#1c2321 !important}
@@ -575,7 +575,7 @@ function renderRecord(){
    '<label class="flabel">教材</label><div class="dd"><button class="dd-btn" id="ddBtn"><span class="s1">'+esc(seriesOf(d.name))+'</span><span class="s2" style="color:#1c2321">'+esc(shortOf(d.name))+statusIcon(d)+'</span></button><div class="dd-list" id="ddList" style="display:none">'+ddList+"</div></div>"+
    '<div class="grid">'+cells+'</div>'+schedHtml+
    '<div class="legend"><span><span class="sw b"></span>実施済み</span><span><span class="sw r"></span>苦手（未復習）</span><span><span class="sw b"></span>＋復＝苦手だったが復習済み</span><span><span class="sw o"></span>枠＝選んだ日に変更したページ</span><span>タップするたびに切り替わります</span></div>'+
-   '<button class="btn" id="recSave" style="width:100%">保存する</button></div>'+
+   '<button class="btn" id="recSave" style="width:100%"'+(Object.keys(pending).length?"":' disabled')+'>'+(Object.keys(pending).length?("保存する（変更 "+Object.keys(pending).length+"件）"):"保存する")+'</button></div>'+
    '<div class="card"><div style="font-weight:800;margin-bottom:2px">苦手メモ</div>'+memoHtml+"</div>"+
    '<div class="card"><div style="font-weight:800;margin-bottom:6px">その他の記録</div>'+
    '<label class="flabel" style="margin-top:0">項目名（なわとび、お教室の復習プリント など）</label><input type="text" id="freeTitle" placeholder="項目名">'+
@@ -650,7 +650,7 @@ function renderProgress(){
       if(st.rev)statsLine+=(st.weak?" ・ ":"・ ")+"復習済み "+st.rev+"件";
       html+='<div class="card"><div class="rowflex"><span class="drill-name grow" title="'+esc(d.name)+'">'+esc(shortOf(d.name))+'</span><span class="status-badge '+badgeCls+'">'+es+'</span></div>'+
         '<div style="margin-top:5px"><span class="muted stats-line" style="font-size:14px">'+statsLine+'</span></div>'+
-        (d.memo?'<div class="memo-line drill-memo" style="margin-top:3px;font-size:10px">'+esc(d.memo)+'</div>':"")+
+        (d.memo?'<div class="memo-line drill-memo" style="margin-top:3px;font-size:12px">'+esc(d.memo)+'</div>':"")+
         '<div class="bar"><i style="width:'+st.pct+'%"></i></div>';
       if(editDrillId===d.id){
         html+='<label class="flabel">教材名</label><input type="text" id="edName" value="'+esc(d.name)+'">'+
@@ -823,7 +823,7 @@ function renderSave(){
   var el=$("#view-save");
   el.innerHTML='<h1>保存</h1>'+
   '<div class="card"><div style="font-weight:800">バックアップ</div><p class="small muted">データはこの端末のブラウザ内（localStorage）にのみ保存され、外部に送信されることはありません。週に1回ほど書き出しをして保管してください。</p>'+
-  '<p class="small muted">ファイルの版：2026-11-24 v9（進捗カード：状態ピルを教材名の行の右端へ移動／メモ10px・統計行14pxを要素への直接指定でも保証）</p>'+
+  '<p class="small muted">ファイルの版：2026-11-24 v10（記録の保存ボタン：変更0件では無効・文言「保存する」、変更があると「保存する（変更 N件）」で有効化／進捗カードの教材メモを12pxに拡大・統計行14px）</p>'+
   '<button class="btn" id="svExport" style="width:100%">JSONを書き出す（ダウンロード）</button>'+
   '<button class="btn subbtn" id="svHtml" style="width:100%;margin-top:8px">単体HTMLを書き出す（muse-drill-tracker.html）</button>'+
   '<label class="flabel">バックアップを読み込む（旧GitHub版の形式にも対応）</label><input type="file" id="svImport" accept=".json,application/json"></div>'+
