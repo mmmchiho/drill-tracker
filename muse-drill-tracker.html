@@ -56,7 +56,7 @@ nav.tabs button.on{color:var(--teal)}
 .pill{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:600;margin:0 5px 5px 0;background:#e8ebff;color:#2b3a8f}
 .pill.rev{background:var(--green);color:#fff}
 .revtxt{color:var(--green);font-weight:700;font-size:13px}
-.rv-series{font-size:11px;color:var(--sub);font-weight:600}
+.rv-series{font-size:13px;color:var(--sub);font-weight:600}
 .repeat-ico{color:var(--green);font-size:14px;margin-right:2px;vertical-align:1px}
 .xbtn{flex:none;width:26px;height:26px;min-height:26px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--sub);font-size:13px;line-height:1;padding:0;margin-left:auto}
 .status-badge{flex:none;border-radius:999px;padding:2px 10px;font-size:11px;font-weight:700;color:#fff;background:var(--blue)}
@@ -66,7 +66,7 @@ nav.tabs button.on{color:var(--teal)}
 .bar{height:9px;border-radius:99px;background:var(--line);overflow:hidden;margin:7px 0 5px}
 .bar>i{display:block;height:100%;background:var(--blue);border-radius:99px}
 /* series */
-.series-head{font-size:17px;font-weight:800;background:var(--card);border-left:6px solid var(--teal);border-radius:10px;padding:10px 12px;margin:16px 0 8px;box-shadow:var(--shadow)}
+.series-head{font-size:19px;font-weight:800;background:var(--card);border-left:6px solid var(--teal);border-radius:10px;padding:10px 12px;margin:16px 0 8px;box-shadow:var(--shadow)}
 .series-head.cnt{color:var(--sub);font-size:13px;font-weight:600;margin-left:6px}
 .chips{display:flex;gap:7px;flex-wrap:wrap;margin:2px 0 4px}
 .chip{border:1.5px solid var(--teal);color:var(--teal);background:var(--card);border-radius:999px;padding:5px 12px;font-weight:700;font-size:12.5px;min-height:34px}
@@ -80,18 +80,18 @@ nav.tabs button.on{color:var(--teal)}
 .cell.weak{background:var(--red);border-color:var(--red);color:#fff}
 .cell.reviewed{background:var(--blue);border-color:var(--blue);color:#fff}
 .cell .fuku{position:absolute;top:1px;right:2px;font-size:9px;background:#fff;color:var(--blue);border-radius:4px;padding:0 3px;line-height:1.5;font-weight:800;pointer-events:none}
-.cell.today{outline:3px solid var(--orange);outline-offset:-1px}
+.cell.today{outline:3px solid #fff;outline-offset:-1px;box-shadow:inset 0 0 0 5px #1c2321,0 0 0 1.5px #1c2321}
 .cell.pending{box-shadow:inset 0 0 0 2px var(--ink)}
 .legend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:11.5px;color:var(--sub);margin-top:8px}
 .sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:3px}
-.sw.b{background:var(--blue)}.sw.r{background:var(--red)}.sw.o{background:none;border:3px solid var(--orange);width:13px;height:13px}
+.sw.b{background:var(--blue)}.sw.r{background:var(--red)}.sw.o{background:#fff;border:2px solid #1c2321;box-shadow:inset 0 0 0 2px #1c2321;width:13px;height:13px}
 /* custom dropdown */
 .dd{position:relative}
 .dd-btn{width:100%;text-align:left;background:var(--input);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-height:52px;color:var(--ink)}
-.dd-btn .s1{display:block;font-size:11.5px;color:var(--sub);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dd-btn .s1{display:block;font-size:13.5px;color:var(--sub);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dd-btn .s2{display:block;font-size:14.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dd-list{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);max-height:46vh;overflow:auto;z-index:50;padding:4px}
-.dd-head{font-size:11.5px;color:var(--sub);font-weight:800;padding:8px 8px 3px}
+.dd-head{font-size:13.5px;color:var(--sub);font-weight:800;padding:8px 8px 3px}
 .dd-item{display:block;width:100%;text-align:left;background:none;border:none;padding:8px;border-radius:8px;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:38px;color:var(--ink)}
 .dd-item.sel{background:var(--chip);font-weight:700}
 /* calendar */
@@ -132,7 +132,7 @@ details.paused-sec summary{font-weight:700;color:#b45309;cursor:pointer;padding:
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom));background:#111;color:#fff;padding:9px 16px;border-radius:999px;font-size:13px;z-index:90;opacity:0;pointer-events:none;transition:opacity.25s}
 .toast.show{opacity:.94}
 .empty{padding:22px 14px;text-align:center;color:var(--sub)}
-.log-series{font-size:11px;color:var(--sub);font-weight:600;margin:0 0 1px}
+.log-series{font-size:13px;color:var(--sub);font-weight:600;margin:0 0 1px}
 .memo-line{white-space:pre-wrap;word-break:break-word}
 .muted.stats-line{font-size:14px !important}
 .memo-line.drill-memo{font-size:12px !important;font-weight:400;line-height:1.5}
@@ -566,7 +566,7 @@ function renderRecord(){
     var t0=todayStr();
     schedHtml='<p class="small" style="margin:8px 0 0">復習予定：'+weakSched.map(function(p){
       var r=m[String(p)].remind;var txt="p"+p+" → "+(r?fmtMDShort(r):"―");
-      if(r&&r<t0)return '<span style="color:var(--red);font-weight:700">'+txt+"（過ぎています）</span>";
+      if(r&&r<t0)return '<span style="color:var(--red);font-weight:700">'+txt+"</span>";
       return txt;
     }).join(" ・ ")+"</p>";
   }
@@ -716,8 +716,8 @@ function reviewCard(it){
   else if(it.fromPaused)extra='<div class="rowflex" style="margin-top:6px"><span class="tag graypill">一時ストップ中の教材</span><span class="grow"></span><button class="btn subbtn" data-rvpause="'+it.drill.id+"|"+it.page+'" style="min-height:34px;padding:4px 10px">ストップ側に戻す</button></div>';
   var series=seriesOf(it.drill.name);
   return '<div class="card'+(overdue?" due-card":"")+'">'+(series!=="その他"?'<div class="rv-series">'+esc(series)+'</div>':"")+'<div class="rv-name">'+esc(shortOf(it.drill.name))+' <span class="pg">p.'+it.page+'</span></div>'+
-  '<div class="rowflex" style="margin-top:6px"><span class="small" style="'+(overdue?"color:var(--red);font-weight:700":"")+'">復習予定 '+fmtMD(it.st.remind)+'</span><label class="datebtn" title="日付を変更">📅<input type="date" data-rvdate="'+it.drill.id+"|"+it.page+'" value="'+(it.st.remind||"")+'"></label>'+
-  '<span class="small muted">初回実施日 '+(it.st.first?fmtMD(it.st.first):"―")+(it.st.rc?" ・ 復習 "+it.st.rc+"回目":"")+'</span></div>'+
+  '<div class="rowflex" style="margin-top:6px"><span class="small" style="font-size:14px;'+(overdue?"color:var(--red);font-weight:700":"")+'">復習予定 '+fmtMD(it.st.remind)+'</span><label class="datebtn" title="日付を変更">📅<input type="date" data-rvdate="'+it.drill.id+"|"+it.page+'" value="'+(it.st.remind||"")+'"></label>'+
+  '<span class="small muted" style="font-size:14px">初回実施日 '+(it.st.first?fmtMD(it.st.first):"―")+(it.st.rc?" ・ 復習 "+it.st.rc+"回目":"")+'</span></div>'+
   (it.st.memo?'<div class="memo-line small" style="margin-top:5px">メモ：'+esc(it.st.memo)+"</div>":"")+
   '<div class="rowflex" style="margin-top:8px"><button class="btn grow" data-rvdone="'+it.drill.id+"|"+it.page+'">復習した</button><button class="btn grow" data-rvstill="'+it.drill.id+"|"+it.page+'" style="background:#fff;color:var(--red);border:1.5px solid var(--red);font-weight:700">まだ苦手（+1ヶ月）</button></div>'+extra+'</div>';
 }
@@ -843,7 +843,7 @@ function renderSave(){
   '<div class="card"><div style="font-weight:800">文字の大きさ</div><p class="small muted">アプリ全体（タブバーも含む）の表示の大きさを切り替えます。設定はこの端末に保存され、次回開いたときもそのまま使えます。</p>'+
   '<div class="rowflex">'+fsBtn("std","標準")+fsBtn("big","大きめ")+fsBtn("xl","特大")+"</div></div>"+
   '<div class="card"><div style="font-weight:800">バックアップ</div><p class="small muted">データはこの端末のブラウザ内（localStorage）にのみ保存され、外部に送信されることはありません。週に1回ほど書き出しをして保管してください。</p>'+
-  '<p class="small muted">ファイルの版：2026-11-24 v11（保存タブに「文字の大きさ」設定を追加：標準／大きめ／特大でアプリ全体を拡大、設定は端末に保存／記録の保存ボタン・教材メモ12px・統計行14pxは継続）</p>'+
+  '<p class="small muted">ファイルの版：2026-11-24 v12（記録の復習予定は期限切れを赤字のみで表示／変更ページの枠を白＋濃色の二重枠に変更／シリーズ名の行を全箇所で約2px拡大／復習カードの「復習予定」「初回実施日」を約2px拡大）</p>'+
   '<button class="btn" id="svExport" style="width:100%">JSONを書き出す（ダウンロード）</button>'+
   '<button class="btn subbtn" id="svHtml" style="width:100%;margin-top:8px">単体HTMLを書き出す（muse-drill-tracker.html）</button>'+
   '<label class="flabel">バックアップを読み込む（旧GitHub版の形式にも対応）</label><input type="file" id="svImport" accept=".json,application/json"></div>'+
