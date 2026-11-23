@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#0f766e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ドリルトラッカー">
+<title>ドリルトラッカー</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230f766e'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3E%E3%83%89%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230f766e'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3E%E3%83%89%3C/text%3E%3C/svg%3E">
+<link rel="manifest" href='data:application/manifest+json,{"name":"ドリルトラッカー","short_name":"ドリル","display":"standalone","background_color":"#ffffff","theme_color":"#0f766e"}'>
+<style>
+:root{
+--bg:#f4f4f2; --card:#ffffff; --ink:#1c2321; --sub:#5c6663; --line:#e2e5e3;
+--teal:#0f766e; --teal-d:#0b5e57; --blue:#2563eb; --red:#dc2626; --green:#16a34a; --orange:#f97316;
+--chip:#eef4f3; --input:#f7f7f5; --shadow:0 1px 3px rgba(0,0,0,.07);
+color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark){
+:root{ --bg:#171a19; --card:#222625; --ink:#eceeed; --sub:#a7b0ad; --line:#363c3a; --chip:#26302e; --input:#2a2f2d; --shadow:0 1px 3px rgba(0,0,0,.4);}
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;font-size:14px;line-height:1.45;-webkit-tap-highlight-color:transparent}
+button,[role="button"],select,input,summary{min-height:36px}
+button{font:inherit;cursor:pointer}
+input,select,textarea{font:inherit;color:var(--ink)}
+main{max-width:760px;margin:0 auto;padding:10px 12px 96px}
+h1{font-size:19px;margin:6px 2px 10px}
+.view{display:none}.view.active{display:block}
+.card{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:12px;margin:0 0 10px}
+.muted{color:var(--sub);font-size:12px}
+.small{font-size:12px}
+.btn{background:var(--teal);color:#fff;border:none;border-radius:10px;padding:8px 14px;font-weight:700;min-height:40px}
+.btn:active{background:var(--teal-d)}
+.btn.subbtn{background:var(--card);color:var(--ink);border:1px solid var(--line);font-weight:600}
+.btn.danger{background:#fff;color:var(--red);border:1px solid var(--line)}
+.btn:disabled{opacity:.45}
+input[type="text"],input[type="number"],input[type="date"],input[type="search"],textarea,select{background:var(--input);border:1px solid var(--line);border-radius:9px;padding:7px 9px;width:100%}
+textarea{resize:vertical}
+label.flabel{display:block;font-size:12px;color:var(--sub);margin:10px 0 4px;font-weight:600}
+/* bottom tabs */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;z-index:60;padding-bottom:env(safe-area-inset-bottom)}
+nav.tabs button{flex:1;background:none;border:none;color:var(--sub);font-size:12px;font-weight:600;padding:9px 0 7px;position:relative;min-height:48px}
+nav.tabs button.on{color:var(--teal)}
+.badge{position:absolute;top:3px;right:calc(50% - 24px);background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:999px;min-width:19px;height:19px;line-height:19px;padding:0 4px}
+/* pills */
+.pill{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:600;margin:0 5px 5px 0;background:#e8ebff;color:#2b3a8f}
+@media (prefers-color-scheme: dark){.pill{background:#2c3355;color:#c3cbff}}
+.pill.rev{background:var(--green);color:#fff}
+.revtxt{color:var(--green);font-weight:700;font-size:13px}
+.rv-series{font-size:11px;color:var(--sub);font-weight:600}
+.repeat-ico{color:var(--green);font-size:14px;margin-right:2px;vertical-align:1px}
+.xbtn{flex:none;width:26px;height:26px;min-height:26px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--sub);font-size:13px;line-height:1;padding:0;margin-left:auto}
+.status-badge{flex:none;border-radius:999px;padding:2px 10px;font-size:11px;font-weight:700;color:#fff;background:var(--blue)}
+.status-badge.paused{background:#b45309}
+.status-badge.done{background:#6b7280}
+.status-badge.ended{background:#374151}
+.bar{height:9px;border-radius:99px;background:var(--line);overflow:hidden;margin:7px 0 5px}
+.bar>i{display:block;height:100%;background:var(--blue);border-radius:99px}
+/* series */
+.series-head{font-size:17px;font-weight:800;background:var(--card);border-left:6px solid var(--teal);border-radius:10px;padding:10px 12px;margin:16px 0 8px;box-shadow:var(--shadow)}
+.series-head.cnt{color:var(--sub);font-size:13px;font-weight:600;margin-left:6px}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin:2px 0 4px}
+.chip{border:1.5px solid var(--teal);color:var(--teal);background:var(--card);border-radius:999px;padding:5px 12px;font-weight:700;font-size:12.5px;min-height:34px}
+.drill-name{font-weight:700;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.drill-name-lg{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* record grid */
+.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:8px}
+@media(min-width:560px){.grid{grid-template-columns:repeat(10,1fr)}}
+.cell{position:relative;border:1.5px solid var(--line);background:var(--card);border-radius:9px;padding:7px 0 6px;text-align:center;font-weight:700;font-size:13px;min-height:40px;color:var(--ink)}
+.cell.done{background:var(--blue);border-color:var(--blue);color:#fff}
+.cell.weak{background:var(--red);border-color:var(--red);color:#fff}
+.cell.reviewed{background:var(--blue);border-color:var(--blue);color:#fff}
+.cell.fuku{position:absolute;right:2px;bottom:1px;font-size:9px;background:#fff;color:var(--blue);border-radius:4px;padding:0 3px;line-height:1.5;font-weight:800}
+.cell.today{outline:3px solid var(--orange);outline-offset:-1px}
+.cell.pending{box-shadow:inset 0 0 0 2px var(--ink)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:11.5px;color:var(--sub);margin-top:8px}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:3px}
+.sw.b{background:var(--blue)}.sw.r{background:var(--red)}.sw.o{background:none;border:3px solid var(--orange);width:13px;height:13px}
+/* custom dropdown */
+.dd{position:relative}
+.dd-btn{width:100%;text-align:left;background:var(--input);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-height:52px}
+.dd-btn.s1{display:block;font-size:11.5px;color:var(--sub);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dd-btn.s2{display:block;font-size:14.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dd-list{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);max-height:46vh;overflow:auto;z-index:50;padding:4px}
+.dd-head{font-size:11.5px;color:var(--teal);font-weight:800;padding:8px 8px 3px}
+.dd-item{display:block;width:100%;text-align:left;background:none;border:none;padding:8px;border-radius:8px;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:38px}
+.dd-item.sel{background:var(--chip);font-weight:700}
+/* calendar */
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.cal-head b{font-size:15px}
+.cal-nav{background:var(--card);border:1px solid var(--line);border-radius:9px;width:38px;font-size:16px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center}
+.cal.dow{font-size:11px;color:var(--sub);padding:3px 0}
+.cal.day{position:relative;border:none;background:none;border-radius:9px;padding:7px 0;font-size:13px;color:var(--ink);min-height:38px}
+.cal.day.sel{background:var(--teal);color:#fff;font-weight:800}
+.cal.day.today{font-weight:800;color:var(--teal)}
+.cal.day.sel.today{color:#fff}
+.cal.dot{position:absolute;left:50%;transform:translateX(-50%);bottom:3px;width:5px;height:5px;border-radius:50%;background:var(--orange)}
+/* review / good cards */
+.rv-name{font-size:14px;font-weight:700;line-height:1.35}
+.rv-name.pg{color:var(--teal)}
+.datebtn{position:relative;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;min-height:34px;border-radius:9px;border:1px solid var(--line);background:var(--card);font-size:15px;flex:none}
+.datebtn input{position:absolute;inset:0;opacity:0;width:100%;height:100%;min-height:0}
+.rowflex{display:flex;align-items:center;gap:8px}
+.grow{flex:1;min-width:0}
+.tag{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px;background:var(--chip);color:var(--teal)}
+details.paused-sec{margin-top:14px}
+details.paused-sec summary{font-weight:700;color:#b45309;cursor:pointer;padding:8px 2px}
+.fab-col{position:fixed;right:12px;bottom:calc(76px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px;z-index:55}
+.fab{width:40px;height:40px;min-height:40px;border-radius:50%;border:1px solid var(--line);background:var(--card);box-shadow:0 2px 8px rgba(0,0,0,.18);font-size:16px;font-weight:800;color:var(--teal);padding:0}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:80;display:none;align-items:flex-end;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--card);border-radius:16px 16px 0 0;width:100%;max-width:560px;padding:16px 16px calc(16px + env(safe-area-inset-bottom));max-height:82vh;overflow:auto}
+.chk{display:flex;align-items:center;gap:8px;padding:9px 4px;border-bottom:1px solid var(--line);font-size:14px}
+.chk input{width:20px;height:20px;min-height:0}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom));background:#111;color:#fff;padding:9px 16px;border-radius:999px;font-size:13px;z-index:90;opacity:0;pointer-events:none;transition:opacity.25s}
+.toast.show{opacity:.94}
+.empty{padding:22px 14px;text-align:center;color:var(--sub)}
+.memo-line{white-space:pre-wrap;word-break:break-word}
+a.dl{color:var(--teal);font-weight:700}
+</style>
+</head>
+<body>
+<main>
+<section id="view-log" class="view active"></section>
+<section id="view-record" class="view"></section>
+<section id="view-progress" class="view"></section>
+<section id="view-review" class="view"></section>
+<section id="view-good" class="view"></section>
+<section id="view-save" class="view"></section>
+</main>
+<nav class="tabs" id="tabs">
+<button data-tab="log" class="on">ログ</button>
+<button data-tab="record">記録</button>
+<button data-tab="progress">進捗</button>
+<button data-tab="review">復習<span class="badge" id="badge-review" style="display:none"></span></button>
+<button data-tab="good">良問<span class="badge" id="badge-good" style="display:none"></span></button>
+<button data-tab="save">保存</button>
+</nav>
+<div class="modal-bg" id="modalBg"><div class="modal" id="modalBox"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ============ utils ============ */
+var LS_KEY="doriruTrackerV2";
+function $(s,r){return (r||document).querySelector(s)}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
+function todayStr(){var d=new Date();return fmtDate(d)}
+function fmtDate(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function parseDate(s){if(!s)return null;var m=String(s).slice(0,10).match(/^(\d{4})-(\d{2})-(\d{2})/);if(!m)return null;return new Date(+m[1],+m[2]-1,+m[3])}
+function dateOnly(s){var d=parseDate(s);return d?fmtDate(d):""}
+function jstDate(s){if(!s)return "";if(String(s).indexOf("T")>=0){var d=new Date(s);if(!isNaN(d.getTime())){var j=new Date(d.getTime()+9*3600*1000);return j.getUTCFullYear()+"-"+String(j.getUTCMonth()+1).padStart(2,"0")+"-"+String(j.getUTCDate()).padStart(2,"0")}}return dateOnly(s)}
+function addMonths(s,n){var d=parseDate(s)||new Date();d.setMonth(d.getMonth()+n);return fmtDate(d)}
+function addDays(s,n){var d=parseDate(s)||new Date();d.setDate(d.getDate()+n);return fmtDate(d)}
+function fmtJP(s){var d=parseDate(s);if(!d)return s||"";return d.getFullYear()+"年"+(d.getMonth()+1)+"月"+d.getDate()+"日"}
+function fmtMD(s){var d=parseDate(s);if(!d)return "";var w=["日","月","火","水","木","金","土"][d.getDay()];return (d.getMonth()+1)+"/"+d.getDate()+"（"+w+"）"}
+function fmtMDShort(s){var d=parseDate(s);if(!d)return "";return (d.getMonth()+1)+"/"+d.getDate()}
+function toast(msg){var t=$("#toast");t.textContent=msg;t.classList.add("show");setTimeout(function(){t.classList.remove("show")},2200)}
+
+/* ============ drill name handling ============ */
+var SERIES_ORDER=["新版ばっちりくんドリル","旧版ばっちりくんドリル","ひとりでとっくん単元別","ひとりでとっくん365日","ピンポンワーク","ピグマリオン能力育成問題集"];
+function seriesOf(name){
+name=String(name||"");
+if(name.indexOf("ピグマリオン")>=0)return "ピグマリオン能力育成問題集";
+if(name.indexOf("ピンポンワーク")>=0)return "ピンポンワーク";
+if(name.indexOf("365日")>=0)return "ひとりでとっくん365日";
+if(name.indexOf("単元別")>=0)return "ひとりでとっくん単元別";
+if(name.indexOf("旧版")>=0)return "旧版ばっちりくんドリル";
+if(name.indexOf("ばっちりくん")>=0)return "新版ばっちりくんドリル";
+return "その他";
+}
+function shortOf(name){
+var n=String(name||"").replace(/　/g," ").trim();
+var prefixes=["(新版)ばっちりくんドリル","(旧版)ばっちりくんドリル","新版ばっちりくんドリル","旧版ばっちりくんドリル","ばっちりくんドリル","ひとりでとっくん単元別","ひとりでとっくん365日","ピンポンワーク","ピグマリオン能力育成問題集","ピグマリオン"];
+for(var i=0;i<prefixes.length;i++){if(n.indexOf(prefixes[i])===0){n=n.slice(prefixes[i].length).trim();break}}
+n=n.replace(/^【[^】]*】\s*/,"").trim();
+// "01基礎1-A" (365日) -> "01. 基礎1-A"
+var m=n.match(/^(\d{1,3})([^\d.\s].*)$/);
+if(m && n.indexOf(".")!==1 && n.indexOf(".")!==2 && n.indexOf(".")!==3){ n=m[1]+". "+m[2];}
+else { var m2=n.match(/^(\d{1,3})\s+(.+)$/); if(m2 && m2[2].indexOf(".")!==0 &&!/^\d+\./.test(n)) n=m2[1]+". "+m2[2];}
+return n||String(name||"");
+}
+function inferTotal(name){
+var n=String(name||"");
+if(n.indexOf("テスト")>=0 && n.indexOf("365日")>=0) return null;
+if(n.indexOf("ピグマリオン")>=0) return 28;
+if(n.indexOf("映像の記憶")>=0 && /63/.test(n)) return 15;
+if(n.indexOf("はさみぎり")>=0) return 20;
+if(n.indexOf("365日")>=0){ var m=n.match(/365日\s*0?([2-5])\b/); if(m) return 31; return 30;}
+if(n.indexOf("ピンポンワーク")>=0 && /(6月|8月|9月|10月)/.test(n)) return 40;
+return 30;
+}
+function normName(name){return String(name||"").replace(/[\s　]/g,"").replace(/【[^】]*】/g,"").replace(/[()（）]/g,"").replace(/\./g,"").replace(/新版|旧版/g,"")}
+
+/* ============ state ============ */
+var S=null;
+function blankState(){return {version:2,drills:[],pages:{},logs:[],freeLogs:[],goods:[]}}
+function load(){
+try{var raw=localStorage.getItem(LS_KEY);if(raw){S=JSON.parse(raw);if(S&&S.version===2)return}}catch(e){}
+S=blankState();
+}
+function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(S))}catch(e){toast("保存できませんでした（容量不足の可能性）")}}
+function drillById(id){for(var i=0;i<S.drills.length;i++)if(S.drills[i].id===id)return S.drills[i];return null}
+function findDrillByName(name){
+for(var i=0;i<S.drills.length;i++)if(S.drills[i].name===name)return S.drills[i];
+var nn=normName(name);
+for(var j=0;j<S.drills.length;j++)if(normName(S.drills[j].name)===nn)return S.drills[j];
+// number + title fuzzy
+var num=(String(name).match(/(\d{1,3})/)||[])[1];
+if(num){var cands=S.drills.filter(function(d){return seriesOf(d.name)===seriesOf(name)&&String(shortOf(d.name)).indexOf(num+".")===0||String(shortOf(d.name)).indexOf(num+" ")===0});
+if(cands.length===1)return cands[0];}
+return null;
+}
+function getOrCreateDrill(name){
+var d=findDrillByName(name);if(d)return d;
+d={id:uid(),name:name,total:inferTotal(name),memo:"",status:"進行中"};
+S.drills.push(d);return d;
+}
+function pageMap(drillId){if(!S.pages[drillId])S.pages[drillId]={};return S.pages[drillId]}
+function pageState(drillId,p){var m=S.pages[drillId];if(!m)return null;return m[String(p)]||null}
+function drillStats(d){
+var m=S.pages[d.id]||{};var done=0,weak=0,rev=0;
+Object.keys(m).forEach(function(k){var st=m[k];if(!st)return;if(st.s==="done"){done++}else if(st.s==="weak"){done++;weak++}else if(st.s==="reviewed"){done++;rev++}});
+var total=d.total||0;var pct=total?Math.round(done/total*100):0;
+var complete=total>0&&done>=total&&weak===0;
+return {done:done,weak:weak,rev:rev,total:total,pct:pct,complete:complete};
+}
+function effStatus(d){if(d.status==="終了")return "終了";var st=drillStats(d);if(st.complete)return "完了";if(d.status==="一時ストップ")return "一時ストップ";return "進行中"}
+function drillNum(d){var m=String(shortOf(d.name)).match(/^(\d+)/);return m?parseInt(m[1],10):9999}
+function cmpDrills(a,b){var ca=effStatus(a)==="完了"?1:0,cb=effStatus(b)==="完了"?1:0;if(ca!==cb)return ca-cb;var na=drillNum(a),nb=drillNum(b);if(na!==nb)return na-nb;return shortOf(a.name).localeCompare(shortOf(b.name),"ja",{numeric:true})}
+function statusIcon(d){var es=effStatus(d);return es==="完了"?" ☑️":(es==="一時ストップ"?" 🚫":"")}
+</script>
+<script>
+"use strict";
+/* ============ import (old GitHub format + own format) ============ */
+function parsePagesStr(s){if(!s)return[];return String(s).split(",").map(function(x){return parseInt(x,10)}).filter(function(x){return !isNaN(x)&&x>0})}
+function timingToRemind(timing,createdDate,memo){
+  var t=String(timing||"").trim();var base=dateOnly(createdDate)||todayStr();
+  var ym=t.match(/(20\d{2})/);var yr=ym?+ym[1]:null;
+  var md=t.match(/(20\d{2})-(\d{2})-(\d{2})/);if(md)return md[0];
+  function seasonDate(y,season){var mm={ "春":"03-01","夏":"06-01","秋":"09-01","冬":"12-01"}[season];return y+"-"+mm}
+  var sm=t.match(/(春|夏|秋|冬)/);
+  if(yr&&sm)return seasonDate(yr,sm[1]);
+  if(t==="2027"||t==="来年")return "2027-03-01";
+  if(sm){var y=(parseDate(base)||new Date()).getFullYear();var cand=seasonDate(y,sm[1]);if(cand<base)cand=seasonDate(y+1,sm[1]);return cand}
+  if(/年長春/.test(t))return "2027-03-01";
+  return addDays(base,90);
+}
+function importOld(data){
+  S=blankState();
+  (data.drills||[]).forEach(function(name){getOrCreateDrill(name)});
+  var logs=(data.logs||[]).slice().sort(function(a,b){return String(a.date).localeCompare(String(b.date))||((a.id||0)-(b.id||0))});
+  var seen={};
+  logs.forEach(function(l){
+    var pages=parsePagesStr(l.pages);
+    if(l.free){S.freeLogs.push({id:uid()+Math.random(),date:l.date,title:String(l.free),memo:l.memo||""})}
+    if(!l.drill||!pages.length)return;
+    var d=getOrCreateDrill(l.drill);var m=pageMap(d.id);
+    var changes=[];
+    pages.forEach(function(p){
+      var key=d.id+"|"+p;var before=m[String(p)]?JSON.parse(JSON.stringify(m[String(p)])):null;
+      var count=(seen[key]||0)+1;seen[key]=count;
+      if(!m[String(p)])m[String(p)]={s:"done",first:l.date};
+      changes.push({p:p,before:before,after:JSON.parse(JSON.stringify(m[String(p)])),repeat:count>=2});
+    });
+    if(changes.length)S.logs.push({id:uid()+Math.random(),date:l.date,drillId:d.id,changes:changes,kind:"import"});
+  });
+  // weaks: latest entry per page decides current state (done / donePages = reviewed)
+  var perPage={};
+  (data.weaks||[]).forEach(function(w){
+    var d=getOrCreateDrill(w.drill);
+    parsePagesStr(w.pages).forEach(function(p){
+      var key=d.id+"|"+p;(perPage[key]=perPage[key]||[]).push({w:w,drillId:d.id,page:p});
+    });
+  });
+  Object.keys(perPage).forEach(function(key){
+    var arr=perPage[key].sort(function(a,b){return String(a.w.date).localeCompare(String(b.w.date))});
+    var last=arr[arr.length-1];var w=last.w;
+    var isDone=false;
+    if(Array.isArray(w.donePages))isDone=w.donePages.map(String).indexOf(String(last.page))>=0;
+    else if(w.done===true)isDone=true;
+    var memo="";arr.forEach(function(e){if(e.w.memo)memo=e.w.memo});
+    var d=drillById(last.drillId);var m=pageMap(d.id);var cur=m[String(last.page)];
+    var first=(cur&&cur.first)||dateOnly(w.date);
+    if(isDone)m[String(last.page)]={s:"reviewed",first:first,weakDate:dateOnly(w.date),remind:dateOnly(w.remindDate)||addMonths(dateOnly(w.date),1),memo:memo,reviewedDate:dateOnly(w.doneDate)||dateOnly(w.date)};
+    else m[String(last.page)]={s:"weak",first:first,weakDate:dateOnly(w.date),remind:dateOnly(w.remindDate)||addMonths(dateOnly(w.date),1),memo:memo};
+  });
+  (data.goods||[]).forEach(function(g){
+    var d=getOrCreateDrill(g.drill);var pages=parsePagesStr(g.pages);
+    var t=String(g.timing||"");
+    var isTiming=/20\d{2}|\u6625|\u590f|\u79cb|\u51ac|\u5e74\u9577/.test(t);
+    var memo=g.memo||"";if(t&&!isTiming){memo=(memo?memo+" ":"")+t}
+    var type="\u305d\u306e\u4ed6";
+    var hay=t+" "+memo;
+    if(hay.indexOf("\u79cb")>=0||hay.indexOf("\u51ac")>=0||hay.indexOf("\u6625")>=0||hay.indexOf("\u590f")>=0||hay.indexOf("\u5b63\u7bc0")>=0)type="\u5b63\u7bc0";
+    else if(hay.indexOf("\u30b9\u30d4\u30fc\u30c9")>=0||hay.indexOf("\u30c6\u30ad\u30d1\u30ad")>=0)type="\u30b9\u30d4\u30fc\u30c9\u30a2\u30c3\u30d7";
+    else if(hay.indexOf("\u899a\u3048")>=0||hay.indexOf("\u5fd8\u308c")>=0)type="\u5fd8\u308c\u305d\u3046";
+    S.goods.push({id:uid()+Math.random(),drillId:d.id,pages:pages,type:type,memo:memo,timingText:t,remind:timingToRemind(t,g.date,memo),done:false,created:jstDate(g.date)});
+  });
+  if(!findDrillByName("\u30d4\u30b0\u30de\u30ea\u30aa\u30f3\u80fd\u529b\u80b2\u6210\u554f\u984c\u96c6\u30001 \u70b9\u63cf\u5199\u2460")){
+    S.drills.push({id:uid(),name:"\u30d4\u30b0\u30de\u30ea\u30aa\u30f3\u80fd\u529b\u80b2\u6210\u554f\u984c\u96c6\u30001 \u70b9\u63cf\u5199\u2460",total:28,memo:"",status:"\u9032\u884c\u4e2d"});
+  }
+  // defaults matching the curated state decided in the prototype
+  function byNum(series,num){var f=null;S.drills.forEach(function(d){if(!f&&seriesOf(d.name)===series&&drillNum(d)===num)f=d});return f}
+  var d44=byNum("新版ばっちりくんドリル",44),d73=byNum("新版ばっちりくんドリル",73),d37=byNum("新版ばっちりくんドリル",37),d17=byNum("ひとりでとっくん単元別",17);
+  [d44,d73,d37,d17].forEach(function(d){if(d)d.status="一時ストップ"});
+  if(d73)d73.memo="くもんのてんびん論理パズルで具体物を使って学んでから再開する（年始あたりに再挑戦）。苦手ページ p20・21（期日12/6）・p26（期日12/13）は止めている間に過ぎても大丈夫で、再開時に期日を付け替える。";
+  if(d37)d37.memo="前半：線対称（点線で折って裏側に写す）。p10あたり：反転した図を選ぶ問題。中盤（p11〜）：90度回転させて写す。先に新版36とピグマリオンで『まっすぐ正確に写す』力を固めてから再開する。";
+  if(d17){var m17=pageMap(d17.id);[8,16,20].forEach(function(p){var st=m17[String(p)];if(st&&st.s==="weak")st.main=true})}
+  save();
+}
+function importOwn(data){
+  S={version:2,drills:data.drills||[],pages:data.pages||{},logs:data.logs||[],freeLogs:data.freeLogs||[],goods:data.goods||[]};
+  save();
+}
+function exportData(){
+  return {app:"doriru-tracker",version:2,exportedAt:new Date().toISOString(),drills:S.drills,pages:S.pages,logs:S.logs,freeLogs:S.freeLogs,goods:S.goods};
+}
+
+/* ============ tabs / badges ============ */
+var curTab="log";
+function dueReviewCount(){
+  var t=todayStr();var c=0;
+  S.drills.forEach(function(d){var es=effStatus(d);if(es==="終了")return;var m=S.pages[d.id]||{};Object.keys(m).forEach(function(k){var st=m[k];if(st&&st.s==="weak"&&st.remind&&st.remind<=t){if(es==="一時ストップ"&&!st.main)return;c++}})});
+  return c;
+}
+function dueGoodCount(){var t=todayStr();return S.goods.filter(function(g){return !g.done&&g.remind&&g.remind<=t}).length}
+function refreshBadges(){
+  var r=dueReviewCount(),g=dueGoodCount();
+  var br=$("#badge-review"),bg=$("#badge-good");
+  br.style.display=r?"":"none";br.textContent=r;bg.style.display=g?"":"none";bg.textContent=g;
+}
+function switchTab(tab){
+  curTab=tab;
+  document.querySelectorAll("nav.tabs button").forEach(function(b){b.classList.toggle("on",b.dataset.tab===tab)});
+  document.querySelectorAll(".view").forEach(function(v){v.classList.remove("active")});
+  $("#view-"+tab).classList.add("active");
+  render();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll("nav.tabs button").forEach(function(b){b.addEventListener("click",function(){
+  if(curTab==="review"&&b.dataset.tab==="review"){window.scrollTo({top:0,behavior:"smooth"});return}
+  switchTab(b.dataset.tab);
+})});
+function render(){
+  refreshBadges();
+  if(curTab==="log")renderLog();
+  else if(curTab==="record")renderRecord();
+  else if(curTab==="progress")renderProgress();
+  else if(curTab==="review")renderReview();
+  else if(curTab==="good")renderGood();
+  else if(curTab==="save")renderSave();
+}
+function openModal(html){$("#modalBox").innerHTML=html;$("#modalBg").classList.add("open")}
+function closeModal(){$("#modalBg").classList.remove("open")}
+$("#modalBg").addEventListener("click",function(e){if(e.target===this)closeModal()});
+function updateFab(){
+  var fb=$("#fabBottom"),ft=$("#fabTop");if(!fb||!ft)return;
+  var y=window.scrollY||document.documentElement.scrollTop||0;
+  var max=(document.documentElement.scrollHeight||document.body.scrollHeight)-window.innerHeight;
+  fb.style.display=(max-y>40)?"":"none";
+  ft.style.display=(y>40)?"":"none";
+}
+window.addEventListener("scroll",updateFab,{passive:true});
+</script>
+<script>
+"use strict";
+/* ============ LOG view ============ */
+var logMonth=null, logSelDate=null, logShowAll=false;
+function logsByDate(){
+  var map={};
+  S.logs.forEach(function(l){(map[l.date]=map[l.date]||[]).push(l)});
+  S.freeLogs.forEach(function(f){(map[f.date]=map[f.date]||[]).push({freeId:f.id,free:f})});
+  return map;
+}
+function renderLog(){
+  var el=$("#view-log");
+  if(!logMonth){var n=new Date();logMonth=n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0")}
+  var parts=logMonth.split("-");var y=+parts[0],mo=+parts[1];
+  var byDate=logsByDate();
+  var first=new Date(y,mo-1,1);var startDow=first.getDay();var days=new Date(y,mo,0).getDate();
+  var cells="";["日","月","火","水","木","金","土"].forEach(function(d){cells+='<div class="dow">'+d+"</div>"});
+  for(var i=0;i<startDow;i++)cells+="<div></div>";
+  for(var dd=1;dd<=days;dd++){
+    var ds=y+"-"+String(mo).padStart(2,"0")+"-"+String(dd).padStart(2,"0");
+    var cls="day"+(ds===todayStr()?" today":"")+(!logShowAll&&logSelDate===ds?" sel":"");
+    cells+='<button class="day '+cls+'" data-date="'+ds+'">'+dd+(byDate[ds]?'<span class="dot"></span>':"")+"</button>";
+  }
+  var dates=Object.keys(byDate).sort().reverse();
+  var showDates=logShowAll?dates:(logSelDate?[logSelDate]:(dates.length?[dates[0]]:[]));
+  var detail="";
+  if(!S.logs.length&&!S.freeLogs.length){
+    detail='<div class="card empty">まだ記録がありません。<br>「保存」タブからバックアップを読み込むか、「記録」タブから記録を始められます。</div>';
+  } else if(!showDates.length||!showDates.some(function(d){return byDate[d]})){
+    detail='<div class="card empty">この日の記録はありません。カレンダーの日付をタップすると、その日の記録が見られます。</div>';
+  } else {
+    showDates.forEach(function(ds){
+      var items=(byDate[ds]||[]).slice();
+      if(!items.length)return;
+      detail+='<div style="font-weight:800;margin:12px 2px 6px">'+fmtJP(ds)+'（'+["日","月","火","水","木","金","土"][(parseDate(ds)||new Date()).getDay()]+'）</div>';
+      items.forEach(function(it){
+        if(it.free){
+          detail+='<div class="card"><div class="rowflex"><span class="tag">その他の記録</span><span class="grow" style="font-weight:700">'+esc(it.free.title)+'</span><button class="xbtn" data-delfree="'+it.freeId+'" aria-label="削除">✕</button></div>'+(it.free.memo?'<div class="memo-line small" style="margin-top:5px">'+esc(it.free.memo)+"</div>":"")+"</div>";
+          return;
+        }
+        var d=drillById(it.drillId);var name=d?d.name:"(削除された教材)";
+        var normal=it.changes.filter(function(c){return !c.repeat});
+        var reps=it.changes.filter(function(c){return c.repeat});
+        var pills=normal.map(function(c){return '<span class="pill">p.'+c.p+"</span>"}).join("");
+        var repHtml=reps.length?'<div style="margin-top:2px"><span class="repeat-ico">🔁</span>'+reps.map(function(c){return '<span class="revtxt">p.'+c.p+"</span>"}).join(" ")+"</div>":"";
+        detail+='<div class="card"><div class="drill-name-lg" title="'+esc(name)+'">'+esc(shortOf(name))+'</div><div class="muted" style="margin:1px 0 6px">'+esc(seriesOf(name))+'</div><div class="rowflex" style="align-items:flex-start"><div class="grow">'+pills+repHtml+'</div><button class="xbtn" data-undo="'+it.id+'" aria-label="記録を取り消す">✕</button></div></div>';
+      });
+    });
+  }
+  el.innerHTML='<h1>ログ</h1><div class="card"><div class="cal-head"><button class="cal-nav" id="calPrev">‹</button><b>'+y+'年'+mo+'月</b><button class="cal-nav" id="calNext">›</button></div><div class="cal">'+cells+'</div><div style="margin-top:8px;text-align:right"><button class="btn subbtn" id="showAllBtn" style="min-height:36px">'+(logShowAll?"選択した日だけ表示":"すべての日を表示")+'</button></div></div>'+detail;
+  $("#calPrev").onclick=function(){var d=new Date(y,mo-2,1);logMonth=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");renderLog()};
+  $("#calNext").onclick=function(){var d=new Date(y,mo,1);logMonth=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");renderLog()};
+  $("#showAllBtn").onclick=function(){logShowAll=!logShowAll;renderLog()};
+  el.querySelectorAll(".day[data-date]").forEach(function(b){b.onclick=function(){logSelDate=b.dataset.date;logShowAll=false;var d=parseDate(logSelDate);if(d)logMonth=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");renderLog()}});
+  el.querySelectorAll("[data-delfree]").forEach(function(b){b.onclick=function(){
+    openConfirm("この記録を削除しますか？",function(){S.freeLogs=S.freeLogs.filter(function(f){return f.id!==b.dataset.delfree});save();render();toast("削除しました")});
+  }});
+  el.querySelectorAll("[data-undo]").forEach(function(b){b.onclick=function(){openUndoPicker(b.dataset.undo)}});
+}
+function openConfirm(msg,onYes){
+  openModal('<p style="font-weight:700">'+esc(msg)+'</p><div class="rowflex" style="margin-top:14px"><button class="btn grow" id="cfYes">実行する</button><button class="btn subbtn grow" id="cfNo">やめる</button></div>');
+  $("#cfNo").onclick=closeModal;$("#cfYes").onclick=function(){closeModal();onYes()};
+}
+function openUndoPicker(logId){
+  var entry=null;S.logs.forEach(function(l){if(l.id===logId)entry=l});if(!entry)return;
+  var d=drillById(entry.drillId);var name=d?shortOf(d.name):"";
+  var html='<p style="font-weight:700;margin-top:0">'+esc(name)+'</p><p class="small muted">'+fmtJP(entry.date)+' の記録から、取り消すページを選んでください。</p>';
+  entry.changes.forEach(function(c){html+='<label class="chk"><input type="checkbox" class="undo-chk" value="'+c.p+'" checked> p.'+c.p+(c.repeat?"（🔁復習）":"")+"</label>"});
+  html+='<div class="rowflex" style="margin-top:14px"><button class="btn grow" id="undoGo">選んだページを取り消す</button><button class="btn subbtn" id="undoCancel">やめる</button></div>';
+  openModal(html);
+  $("#undoCancel").onclick=closeModal;
+  $("#undoGo").onclick=function(){
+    var sel=Array.prototype.map.call(document.querySelectorAll(".undo-chk:checked"),function(c){return +c.value});
+    if(!sel.length){toast("ページを選んでください");return}
+    var label=sel.map(function(p){return "p."+p}).join("、");
+    closeModal();
+    openConfirm(label+"の記録を取り消しますか？",function(){doUndo(entry.id,sel)});
+  };
+}
+function doUndo(logId,pages){
+  var idx=-1;S.logs.forEach(function(l,i){if(l.id===logId)idx=i});if(idx<0)return;
+  var entry=S.logs[idx];var m=pageMap(entry.drillId);
+  entry.changes.filter(function(c){return pages.indexOf(c.p)>=0}).forEach(function(c){
+    if(c.before)m[String(c.p)]=c.before;else delete m[String(c.p)];
+  });
+  entry.changes=entry.changes.filter(function(c){return pages.indexOf(c.p)<0});
+  if(!entry.changes.length)S.logs.splice(idx,1);
+  save();render();toast("取り消しました");
+}
+</script>
+<script>
+"use strict";
+/* ============ RECORD view ============ */
+var recDate=todayStr(), recDrillId=null, pending={}, memoEditPage=null, returnToProgress=false, progressScrollY=0;
+function cycleState(cur){
+  if(!cur)return "done";
+  if(cur==="done")return "weak";
+  if(cur==="weak")return "reviewed";
+  return null; // reviewed -> none
+}
+function renderRecord(){
+  var el=$("#view-record");
+  if(!S.drills.length){
+    el.innerHTML='<h1>記録</h1><div class="card empty">教材がまだありません。<br>「保存」タブからバックアップを読み込むか、教材を追加してください。</div>';return;
+  }
+  if(!recDrillId||!drillById(recDrillId))recDrillId=S.drills[0].id;
+  var d=drillById(recDrillId);
+  // grouped dropdown data
+  var groups={};S.drills.forEach(function(x){var s=seriesOf(x.name);(groups[s]=groups[s]||[]).push(x)});
+  var orderedSeries=SERIES_ORDER.filter(function(s){return groups[s]}).concat(Object.keys(groups).filter(function(s){return SERIES_ORDER.indexOf(s)<0}));
+  var ddList="";orderedSeries.forEach(function(s){ddList+='<div class="dd-head">'+esc(s)+"</div>";groups[s].slice().sort(cmpDrills).forEach(function(x){ddList+='<button class="dd-item'+(x.id===d.id?" sel":"")+'" data-pick="'+x.id+'">'+esc(shortOf(x.name))+statusIcon(x)+"</button>"})});
+  var total=d.total||0;
+  var m=pageMap(d.id);
+  var todaysPages={};S.logs.forEach(function(l){if(l.date===recDate&&l.drillId===d.id)l.changes.forEach(function(c){todaysPages[c.p]=true})});
+  var cells="";
+  for(var p=1;p<=total;p++){
+    var saved=m[String(p)];var cur=(String(p) in pending)?pending[String(p)]:(saved?saved.s:null);
+    var cls="cell"+(cur?" "+cur:"")+(todaysPages[p]?" today":"")+((String(p) in pending)?" pending":"");
+    cells+='<button class="'+cls+'" data-cell="'+p+'">'+p+(cur==="reviewed"?'<span class="fuku">復</span>':"")+"</button>";
+  }
+  if(!total)cells='<p class="muted">この教材は総ページ数が未設定です。進捗タブの編集から設定できます。</p>';
+  // review schedule line for un-reviewed weak pages
+  var weakSched=Object.keys(m).map(Number).filter(function(p){return m[String(p)]&&m[String(p)].s==="weak"}).sort(function(a,b){return String(m[String(a)].remind||"9999").localeCompare(String(m[String(b)].remind||"9999"))||a-b});
+  var schedHtml="";
+  if(weakSched.length){
+    var t0=todayStr();
+    schedHtml='<p class="small" style="margin:8px 0 0">復習予定：'+weakSched.map(function(p){
+      var r=m[String(p)].remind;var txt="p"+p+" → "+(r?fmtMDShort(r):"―");
+      if(r&&r<t0)return '<span style="color:var(--red);font-weight:700">'+txt+"（過ぎています）</span>";
+      return txt;
+    }).join(" ・ ")+"</p>";
+  }
+  // weak memos
+  var weakPages=Object.keys(m).map(Number).sort(function(a,b){return a-b}).filter(function(p){return m[String(p)]&&(m[String(p)].s==="weak"||m[String(p)].s==="reviewed")});
+  var memoHtml="";
+  if(weakPages.length){
+    memoHtml=weakPages.map(function(p){
+      var st=m[String(p)];
+      if(memoEditPage===p){
+        return '<div class="rowflex" style="margin:6px 0"><span style="font-weight:700">p.'+p+'</span><input type="text" id="memoInput" class="grow" value="'+esc(st.memo||"")+'" placeholder="苦手メモ"><button class="btn" id="memoSave" style="min-height:36px">保存</button></div>';
+      }
+      return '<div class="rowflex" style="margin:6px 0"><span style="font-weight:700;flex:none">p.'+p+'</span><span class="grow memo-line small">'+esc(st.memo||"（メモなし）")+'</span><button class="btn subbtn" data-memoedit="'+p+'" style="min-height:34px;padding:4px 10px" aria-label="メモを編集">✎</button></div>';
+    }).join("");
+  } else memoHtml='<p class="muted" style="margin:4px 0">この教材に苦手ページはまだありません。</p>';
+  var todaysFree=S.freeLogs.filter(function(f){return f.date===recDate});
+  var freeList=todaysFree.map(function(f){return '<div class="rowflex" style="margin:5px 0"><span class="grow"><b>'+esc(f.title)+"</b>"+(f.memo?' <span class="muted small">'+esc(f.memo)+"</span>":"")+'</span><button class="xbtn" data-delfree2="'+f.id+'">✕</button></div>'}).join("");
+  el.innerHTML=
+   (returnToProgress?'<button class="btn subbtn" id="backProg" style="margin-bottom:8px">← 進捗に戻る</button>':"")+
+   '<h1>記録</h1>'+
+   '<div class="card"><label class="flabel" style="margin-top:0">日付</label><input type="date" id="recDate" value="'+recDate+'">'+
+   '<label class="flabel">教材</label><div class="dd"><button class="dd-btn" id="ddBtn"><span class="s1">'+esc(seriesOf(d.name))+'</span><span class="s2">'+esc(shortOf(d.name))+statusIcon(d)+'</span></button><div class="dd-list" id="ddList" style="display:none">'+ddList+"</div></div>"+
+   '<div class="grid">'+cells+'</div>'+schedHtml+
+   '<div class="legend"><span><span class="sw b"></span>実施済み</span><span><span class="sw r"></span>苦手（未復習）</span><span><span class="sw b"></span>＋復＝復習済み</span><span><span class="sw o"></span>枠＝選んだ日に変更したページ</span></div>'+
+   '<p class="muted">タップで切り替え：未実施 → 実施済み（青）→ 苦手（赤）→ 復習済み（青＋復）→ 未実施</p>'+
+   '<button class="btn" id="recSave" style="width:100%">保存する</button></div>'+
+   '<div class="card"><div style="font-weight:800;margin-bottom:2px">苦手メモ</div>'+memoHtml+"</div>"+
+   '<div class="card"><div style="font-weight:800;margin-bottom:6px">その他の記録</div>'+
+   '<label class="flabel" style="margin-top:0">項目名（なわとび、お教室の復習プリント など）</label><input type="text" id="freeTitle" placeholder="項目名">'+
+   '<label class="flabel">メモ（任意）</label><input type="text" id="freeMemo" placeholder="メモ">'+
+   '<button class="btn" id="freeAdd" style="width:100%;margin-top:10px">この日に追加</button>'+freeList+"</div>";
+  var bp=$("#backProg");if(bp)bp.onclick=function(){returnToProgress=false;switchTab("progress");setTimeout(function(){window.scrollTo(0,progressScrollY)},50)};
+  $("#recDate").onchange=function(e){recDate=e.target.value;pending={};memoEditPage=null;renderRecord()};
+  var ddOpen=false;var ddBtn=$("#ddBtn"),ddL=$("#ddList");
+  ddBtn.onclick=function(e){e.stopPropagation();ddOpen=!ddOpen;ddL.style.display=ddOpen?"block":"none"};
+  document.addEventListener("click",function(){if(ddOpen){ddOpen=false;ddL.style.display="none"}});
+  ddL.querySelectorAll("[data-pick]").forEach(function(b){b.onclick=function(e){e.stopPropagation();recDrillId=b.dataset.pick;pending={};memoEditPage=null;renderRecord()}});
+  el.querySelectorAll("[data-cell]").forEach(function(c){c.onclick=function(){
+    var p=c.dataset.cell;var saved2=m[p];var cur2=(p in pending)?pending[p]:(saved2?saved2.s:null);
+    var nxt=cycleState(cur2);
+    // if next equals saved state, no pending
+    if(nxt===(saved2?saved2.s:null))delete pending[p];else pending[p]=nxt;
+    renderRecord();
+  }});
+  $("#recSave").onclick=function(){
+    var keys=Object.keys(pending);if(!keys.length){toast("変更がありません");return}
+    var changes=[];
+    keys.forEach(function(k){
+      var p=+k;var before=m[k]?JSON.parse(JSON.stringify(m[k])):null;var target=pending[k];
+      var after=null;
+      if(target===null){after=null;delete S.pages[d.id][k]}
+      else if(target==="done"){after={s:"done",first:(before&&before.first)||recDate};if(before&&before.weakDate){after.first=before.first}S.pages[d.id][k]=after}
+      else if(target==="weak"){after={s:"weak",first:(before&&before.first)||recDate,weakDate:(before&&before.weakDate)||recDate,remind:(before&&before.remind)||addMonths(recDate,1),memo:(before&&before.memo)||""};S.pages[d.id][k]=after}
+      else if(target==="reviewed"){after={s:"reviewed",first:(before&&before.first)||recDate,weakDate:(before&&before.weakDate)||recDate,remind:(before&&before.remind)||addMonths(recDate,1),memo:(before&&before.memo)||"",reviewedDate:recDate};S.pages[d.id][k]=after}
+      var isRepeat=!!before&&(target==="reviewed"||(before.s==="weak"&&target==="reviewed"));
+      changes.push({p:p,before:before,after:after?JSON.parse(JSON.stringify(after)):null,repeat:isRepeat||((before&&before.s!=null)&&target==="done"&&false)});
+      // mark repeat for log display: 2nd+ implementation = page already had a first date before this date
+      if(before&&before.first&&before.first<recDate&&target!==null)changes[changes.length-1].repeat=true;
+      if(target==="done"&&before&&before.s==="reviewed")changes[changes.length-1].repeat=true;
+    });
+    S.logs.push({id:uid(),date:recDate,drillId:d.id,changes:changes,kind:"record"});
+    pending={};save();render();toast("保存しました");
+  };
+  el.querySelectorAll("[data-memoedit]").forEach(function(b){b.onclick=function(){memoEditPage=+b.dataset.memoedit;renderRecord();var inp=$("#memoInput");if(inp){inp.focus()}}});
+  var ms=$("#memoSave");if(ms)ms.onclick=function(){var st=S.pages[d.id][String(memoEditPage)];if(st)st.memo=$("#memoInput").value;memoEditPage=null;save();renderRecord();toast("メモを保存しました")};
+  $("#freeAdd").onclick=function(){
+    var t=$("#freeTitle").value.trim();if(!t){toast("項目名を入力してください");return}
+    S.freeLogs.push({id:uid(),date:recDate,title:t,memo:$("#freeMemo").value.trim()});save();render();toast("追加しました");
+  };
+  el.querySelectorAll("[data-delfree2]").forEach(function(b){b.onclick=function(){S.freeLogs=S.freeLogs.filter(function(f){return f.id!==b.dataset.delfree2});save();render()}});
+}
+</script>
+<script>
+"use strict";
+/* ============ PROGRESS view ============ */
+var editDrillId=null;
+function renderProgress(){
+  var el=$("#view-progress");
+  if(!S.drills.length){el.innerHTML='<h1>進捗</h1><div class="card empty">教材がまだありません。「保存」タブから読み込み／追加できます。</div>';return}
+  var groups={};S.drills.forEach(function(x){var s=seriesOf(x.name);(groups[s]=groups[s]||[]).push(x)});
+  var ordered=SERIES_ORDER.filter(function(s){return groups[s]}).concat(Object.keys(groups).filter(function(s){return SERIES_ORDER.indexOf(s)<0}));
+  var activeCount=S.drills.filter(function(d){return effStatus(d)!=="完了"}).length;
+  var doneCount=S.drills.filter(function(d){return effStatus(d)==="完了"}).length;
+  var html='<h1>進捗</h1><p class="muted" style="margin:0 2px 8px">進行中 '+activeCount+'冊 ・ 完了 '+doneCount+'冊</p><div class="chips">';
+  ordered.forEach(function(s,i){html+='<button class="chip" data-jump="sec'+i+'">'+esc(s)+"</button>"});
+  html+="</div>";
+  ordered.forEach(function(s,i){
+    var list=groups[s].slice().sort(cmpDrills);
+    html+='<div class="series-head" id="sec'+i+'">'+esc(s)+'<span class="cnt">'+list.length+'冊</span></div>';
+    list.forEach(function(d){
+      var st=drillStats(d);var es=effStatus(d);
+      var badgeCls=es==="完了"?"done":(es==="一時ストップ"?"paused":(es==="終了"?"ended":""));
+      var statsLine=st.total?st.done+"/"+st.total+"ページ（"+st.pct+"%）":"ページ数未設定";
+      if(st.weak)statsLine+="・ 要復習"+st.weak+"件";
+      if(st.rev)statsLine+=" ・ 復習済み "+st.rev+"件";
+      html+='<div class="card"><div class="drill-name" title="'+esc(d.name)+'">'+esc(shortOf(d.name))+'</div>'+
+        '<div class="rowflex" style="margin-top:5px"><span class="status-badge '+badgeCls+'">'+es+'</span><span class="small muted">'+statsLine+'</span></div>'+
+        (d.memo?'<div class="small memo-line" style="margin-top:3px">'+esc(d.memo)+'</div>':"")+
+        '<div class="bar"><i style="width:'+st.pct+'%"></i></div>';
+      if(editDrillId===d.id){
+        html+='<label class="flabel">教材名</label><input type="text" id="edName" value="'+esc(d.name)+'">'+
+        '<div class="rowflex"><div class="grow"><label class="flabel">総ページ数</label><input type="number" id="edTotal" min="0" value="'+(d.total==null?"":d.total)+'" placeholder="未設定"></div>'+
+        '<div class="grow"><label class="flabel">状態</label><select id="edStatus"><option'+((d.status!=="一時ストップ"&&d.status!=="終了")?" selected":"")+'>進行中</option><option'+(d.status==="一時ストップ"?" selected":"")+'>一時ストップ</option><option'+(d.status==="終了"?" selected":"")+'>終了</option></select></div></div>'+
+        '<label class="flabel">教材メモ（ストップ位置など）</label><textarea id="edMemo" rows="2" placeholder="例：p24で一旦ストップ。春頃から再開予定">'+esc(d.memo||"")+'</textarea>'+
+        '<div class="rowflex" style="margin-top:10px"><button class="btn grow" data-edsave="'+d.id+'">保存する</button><button class="btn subbtn" data-edclose="1">閉じる</button><button class="btn danger" data-eddel="'+d.id+'">削除</button></div>';
+      } else {
+        html+='<div class="rowflex" style="margin-top:6px"><button class="btn grow" data-gorec="'+d.id+'">記録する</button><button class="btn subbtn" data-edit="'+d.id+'">編集</button></div>';
+      }
+      html+="</div>";
+    });
+  });
+  el.innerHTML=html;
+  el.querySelectorAll("[data-jump]").forEach(function(b){b.onclick=function(){var t=document.getElementById(b.dataset.jump);if(t)t.scrollIntoView({behavior:"smooth"})}});
+  el.querySelectorAll("[data-edit]").forEach(function(b){b.onclick=function(){editDrillId=b.dataset.edit;renderProgress()}});
+  el.querySelectorAll("[data-edclose]").forEach(function(b){b.onclick=function(){editDrillId=null;renderProgress()}});
+  el.querySelectorAll("[data-gorec]").forEach(function(b){b.onclick=function(){recDrillId=b.dataset.gorec;pending={};returnToProgress=true;progressScrollY=window.scrollY;switchTab("record")}});
+  el.querySelectorAll("[data-edsave]").forEach(function(b){b.onclick=function(){
+    var d=drillById(b.dataset.edsave);if(!d)return;
+    d.name=$("#edName").value.trim()||d.name;
+    var tv=$("#edTotal").value;d.total=tv===""?null:Math.max(0,parseInt(tv,10)||0);
+    d.status=$("#edStatus").value;d.memo=$("#edMemo").value;
+    editDrillId=null;save();render();toast("保存しました");
+  }});
+  el.querySelectorAll("[data-eddel]").forEach(function(b){b.onclick=function(){
+    openConfirm("この教材と、その記録をすべて削除しますか？",function(){
+      var id=b.dataset.eddel;S.drills=S.drills.filter(function(x){return x.id!==id});delete S.pages[id];
+      S.logs=S.logs.filter(function(l){return l.drillId!==id});S.goods=S.goods.filter(function(g){return g.drillId!==id});
+      editDrillId=null;save();render();toast("削除しました");
+    });
+  }});
+}
+
+/* ============ REVIEW view ============ */
+var reviewSearch="";
+function reviewItems(){
+  var items=[];
+  S.drills.forEach(function(d){var es=effStatus(d);if(es==="終了")return;var m=S.pages[d.id]||{};Object.keys(m).forEach(function(k){var st=m[k];if(st&&st.s==="weak")items.push({drill:d,page:+k,st:st,paused:es==="一時ストップ"&&!st.main,fromPaused:es==="一時ストップ"&&!!st.main})})});
+  items.sort(function(a,b){return String(a.st.remind||"9999").localeCompare(String(b.st.remind||"9999"))});
+  return items;
+}
+function reviewCard(it){
+  var overdue=it.st.remind&&it.st.remind<=todayStr();
+  var extra="";
+  if(it.paused)extra='<button class="btn subbtn" data-rvmain="'+it.drill.id+"|"+it.page+'" style="width:100%;margin-top:6px">メインに戻す</button>';
+  else if(it.fromPaused)extra='<div class="rowflex" style="margin-top:6px"><span class="tag">一時ストップ中の教材</span><span class="grow"></span><button class="btn subbtn" data-rvpause="'+it.drill.id+"|"+it.page+'" style="min-height:34px;padding:4px 10px">ストップ側に戻す</button></div>';
+  return '<div class="card"><div class="rv-series">'+esc(seriesOf(it.drill.name))+'</div><div class="rv-name">'+esc(shortOf(it.drill.name))+' <span class="pg">p.'+it.page+'</span></div>'+
+  '<div class="rowflex" style="margin-top:6px"><span class="small" style="'+(overdue?"color:var(--red);font-weight:700":"")+'">復習予定 '+fmtMD(it.st.remind)+'</span><label class="datebtn" title="日付を変更">📅<input type="date" data-rvdate="'+it.drill.id+"|"+it.page+'" value="'+(it.st.remind||"")+'"></label>'+
+  '<span class="small muted">初回実施日 '+(it.st.first?fmtMD(it.st.first):"―")+'</span></div>'+
+  (it.st.memo?'<div class="memo-line small" style="margin-top:5px">'+esc(it.st.memo)+"</div>":"")+
+  '<button class="btn" data-rvdone="'+it.drill.id+"|"+it.page+'" style="width:100%;margin-top:8px">復習した</button>'+extra+'</div>';
+}
+function renderReview(){
+  var el=$("#view-review");
+  var items=reviewItems();
+  var main=items.filter(function(x){return !x.paused});
+  var paused=items.filter(function(x){return x.paused});
+  if(reviewSearch){var q=reviewSearch.toLowerCase();main=main.filter(function(x){return x.drill.name.toLowerCase().indexOf(q)>=0||String(x.page)===q.replace("p.","")||shortOf(x.drill.name).toLowerCase().indexOf(q)>=0})}
+  var html='<h1>復習</h1><p class="muted" style="margin:0 2px 8px">未復習 '+main.length+'件</p>'+
+   '<div class="card" style="padding:8px 10px"><input type="search" id="rvSearch" placeholder="教材名・ページで検索" value="'+esc(reviewSearch)+'"></div>';
+  if(!main.length)html+='<div class="card empty">メインの復習リストは空です。</div>';
+  html+=main.map(reviewCard).join("");
+  if(paused.length){
+    html+='<details class="paused-sec"><summary>一時ストップ中の教材の復習（'+paused.length+'件）</summary>'+paused.map(reviewCard).join("")+"</details>";
+  }
+  html+='<div class="fab-col"><button class="fab" id="fabTop" title="先頭へ">↑</button><button class="fab" id="fabBottom" title="一番下へ">↓</button></div>';
+  el.innerHTML=html;
+  var si=$("#rvSearch");si.oninput=function(){reviewSearch=si.value;var pos=si.selectionStart;renderReview();var n=$("#rvSearch");n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}};
+  el.querySelectorAll("[data-rvdone]").forEach(function(b){b.onclick=function(){
+    var pp=b.dataset.rvdone.split("|");var d=drillById(pp[0]);var pg=+pp[1];if(!d)return;
+    var mm=pageMap(d.id);var cur=mm[String(pg)];if(!cur||cur.s!=="weak")return;
+    var before=JSON.parse(JSON.stringify(cur));
+    cur.s="reviewed";cur.reviewedDate=todayStr();
+    S.logs.push({id:uid(),date:todayStr(),drillId:d.id,changes:[{p:pg,before:before,after:JSON.parse(JSON.stringify(cur)),repeat:true}],kind:"review"});
+    save();render();toast("復習済みにしました");
+  }});
+  el.querySelectorAll("[data-rvdate]").forEach(function(inp){inp.onchange=function(){
+    var pp=inp.dataset.rvdate.split("|");var mm=pageMap(pp[0]);var cur=mm[pp[1]];if(cur&&inp.value){cur.remind=inp.value;save();render();toast("復習予定日を変更しました")}
+  }});
+  el.querySelectorAll("[data-rvmain]").forEach(function(b){b.onclick=function(){
+    var pp=b.dataset.rvmain.split("|");var mm=pageMap(pp[0]);if(mm[pp[1]]){mm[pp[1]].main=true;save();render();toast("メインの復習リストに出しました")}
+  }});
+  el.querySelectorAll("[data-rvpause]").forEach(function(b){b.onclick=function(){
+    var pp=b.dataset.rvpause.split("|");var mm=pageMap(pp[0]);if(mm[pp[1]]){delete mm[pp[1]].main;save();render();toast("一時ストップ側に戻しました")}
+  }});
+  $("#fabTop").onclick=function(){window.scrollTo({top:0,behavior:"smooth"})};
+  $("#fabBottom").onclick=function(){window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"})};
+  updateFab();
+}
+
+/* ============ GOOD view ============ */
+function renderGood(){
+  var el=$("#view-good");
+  var t=todayStr();
+  var act=S.goods.filter(function(g){return !g.done}).sort(function(a,b){return String(a.remind||"9999").localeCompare(String(b.remind||"9999"))});
+  var done=S.goods.filter(function(g){return g.done});
+  var gGroups={};S.drills.forEach(function(x){var s=seriesOf(x.name);(gGroups[s]=gGroups[s]||[]).push(x)});
+  var gOrder=SERIES_ORDER.filter(function(s){return gGroups[s]}).concat(Object.keys(gGroups).filter(function(s){return SERIES_ORDER.indexOf(s)<0}));
+  var gdOpts="";gOrder.forEach(function(s){gGroups[s].slice().sort(cmpDrills).forEach(function(d){gdOpts+='<option value="'+d.id+'">'+esc(seriesOf(d.name)+"｜"+shortOf(d.name))+statusIcon(d)+"</option>"})});
+  var html='<h1>良問</h1>';
+  html+='<div class="card"><div style="font-weight:800;margin-bottom:4px">良問を登録</div>'+
+   '<label class="flabel" style="margin-top:2px">教材</label><select id="gdDrill">'+gdOpts+'</select>'+
+   '<div class="rowflex"><div class="grow"><label class="flabel">ページ（例：12,13）</label><input type="text" id="gdPages" inputmode="numeric" placeholder="12"></div>'+
+   '<div class="grow"><label class="flabel">種類</label><select id="gdType"><option>スピードアップ</option><option>季節</option><option>忘れそう</option><option>その他</option></select></div></div>'+
+   '<label class="flabel">メモ</label><input type="text" id="gdMemo" placeholder="メモ">'+
+   '<label class="flabel">リマインド日</label><input type="date" id="gdRemind" value="'+addMonths(t,1)+'">'+
+   '<button class="btn" id="gdAdd" style="width:100%;margin-top:10px">登録する</button></div>';
+  if(!act.length)html+='<div class="card empty">良問はまだありません。</div>';
+  act.forEach(function(g){
+    var d=drillById(g.drillId);var overdue=g.remind&&g.remind<=t;
+    html+='<div class="card"><div class="rv-series">'+esc(d?seriesOf(d.name):"")+'</div><div class="rv-name">'+esc(d?shortOf(d.name):"")+' <span class="pg" style="color:var(--teal)">'+g.pages.map(function(p){return "p."+p}).join(" ")+'</span></div>'+
+    (g.created?'<div class="small muted" style="margin-top:2px">記録：'+fmtMDShort(g.created)+'</div>':"")+
+    '<div class="rowflex" style="margin-top:4px"><span class="tag">'+esc(g.type||"その他")+'</span>'+(g.memo?'<span class="small memo-line">'+esc(g.memo)+"</span>":"")+"</div>"+
+    '<div class="rowflex" style="margin-top:6px"><span class="small grow" style="'+(overdue?"color:var(--red);font-weight:700":"")+'">リマインド：'+fmtJP(g.remind)+'</span><label class="datebtn" title="日付を変更">📅<input type="date" data-gddate="'+g.id+'" value="'+(g.remind||"")+'"></label></div>'+
+    '<button class="btn subbtn" data-gddone="'+g.id+'" style="width:100%;margin-top:8px">取り組んだ</button></div>';
+  });
+  if(done.length)html+='<details class="paused-sec"><summary>取り組み済み（'+done.length+'件）</summary>'+done.map(function(g){var d=drillById(g.drillId);return '<div class="card"><div class="rowflex"><span class="grow small">'+esc(d?shortOf(d.name):"")+" "+g.pages.map(function(p){return "p."+p}).join(" ")+(g.memo?" ・ "+esc(g.memo):"")+'</span><button class="btn subbtn" data-gdundo="'+g.id+'" style="min-height:32px;padding:3px 10px">取り消し</button></div><div class="small muted" style="margin-top:3px">'+(g.created?"記録："+fmtMDShort(g.created):"")+(g.doneDate?" ・ 取り組んだ："+fmtMDShort(g.doneDate):"")+"</div></div>"}).join("")+"</details>";
+  el.innerHTML=html;
+  var addBtn=$("#gdAdd");if(addBtn)addBtn.onclick=function(){
+    var did=$("#gdDrill").value;if(!did){toast("先に教材を追加してください");return}
+    var pages=parsePagesStr($("#gdPages").value);if(!pages.length){toast("ページを入力してください");return}
+    S.goods.push({id:uid(),drillId:did,pages:pages,type:$("#gdType").value,memo:$("#gdMemo").value.trim(),timingText:"",remind:$("#gdRemind").value||addMonths(t,1),done:false,created:t});
+    save();render();toast("登録しました");
+  };
+  el.querySelectorAll("[data-gddone]").forEach(function(b){b.onclick=function(){S.goods.forEach(function(g){if(g.id===b.dataset.gddone){g.done=true;g.doneDate=todayStr()}});save();render();toast("取り組み済みにしました")}});
+  el.querySelectorAll("[data-gdundo]").forEach(function(b){b.onclick=function(){S.goods.forEach(function(g){if(g.id===b.dataset.gdundo){g.done=false;delete g.doneDate}});save();render();toast("未取り組みに戻しました")}});
+  el.querySelectorAll("[data-gddate]").forEach(function(inp){inp.onchange=function(){S.goods.forEach(function(g){if(g.id===inp.dataset.gddate&&inp.value)g.remind=inp.value});save();render();toast("リマインド日を変更しました")}});
+}
+
+/* ============ SAVE view ============ */
+function renderSave(){
+  var el=$("#view-save");
+  el.innerHTML='<h1>保存</h1>'+
+  '<div class="card"><div style="font-weight:800">バックアップ</div><p class="small muted">データはこの端末のブラウザ内（localStorage）にのみ保存され、外部に送信されることはありません。週に1回ほど書き出しをして保管してください。</p>'+
+  '<button class="btn" id="svExport" style="width:100%">JSONを書き出す（ダウンロード）</button>'+
+  '<button class="btn subbtn" id="svHtml" style="width:100%;margin-top:8px">単体HTMLを書き出す（muse-drill-tracker.html）</button>'+
+  '<label class="flabel">バックアップを読み込む（旧GitHub版の形式にも対応）</label><input type="file" id="svImport" accept=".json,application/json"></div>'+
+  '<div class="card"><div style="font-weight:800">教材を追加</div>'+
+  '<label class="flabel">教材名（フルネーム）</label><input type="text" id="svNewName" placeholder="例：ひとりでとっくん単元別　29 仲間はずれ">'+
+  '<label class="flabel">総ページ数（空欄なら名前から自動判定）</label><input type="number" id="svNewTotal" min="0" placeholder="30">'+
+  '<button class="btn" id="svAdd" style="width:100%;margin-top:10px">追加する</button></div>'+
+  '<div class="card"><div style="font-weight:800">iPhoneでアプリのように使う</div><p class="small">Safariでこのページを開き、共有ボタン →「ホーム画面に追加」を選ぶと、アプリのようにホーム画面から開けます。このファイル1つで動くので、GitHub Pagesなどに置いてもそのまま使えます。</p>'+
+  '<p class="small muted">現在のデータ：教材 '+S.drills.length+'冊 ／ ログ '+S.logs.length+'件 ／ 自由記録 '+S.freeLogs.length+'件 ／ 良問 '+S.goods.length+'件</p>'+
+  '<button class="btn danger" id="svWipe" style="width:100%">データをすべて削除</button></div>';
+  $("#svExport").onclick=function(){
+    var blob=new Blob([JSON.stringify(exportData(),null,2)],{type:"application/json"});
+    var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="drill-tracker-backup-"+todayStr()+".json";document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(a.href)},4000);toast("書き出しました");
+  };
+  $("#svHtml").onclick=function(){
+    var html="<!doctype html>\n"+document.documentElement.outerHTML;
+    var blob=new Blob([html],{type:"text/html"});
+    var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="muse-drill-tracker.html";document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(a.href)},4000);toast("書き出しました");
+  };
+  $("#svImport").onchange=function(e){
+    var f=e.target.files[0];if(!f)return;
+    var r=new FileReader();r.onload=function(){
+      try{
+        var data=JSON.parse(r.result);
+        if(data.app==="doriru-tracker"&&data.version===2){importOwn(data)}
+        else if(data.drills&&data.logs){importOld(data)}
+        else{toast("対応していない形式のファイルです");return}
+        recDrillId=null;pending={};switchTab("log");toast("読み込みました");
+      }catch(err){toast("読み込みに失敗しました")}
+    };r.readAsText(f);
+  };
+  $("#svAdd").onclick=function(){
+    var name=$("#svNewName").value.trim();if(!name){toast("教材名を入力してください");return}
+    if(findDrillByName(name)){toast("同じ教材がすでにあります");return}
+    var d={id:uid(),name:name,total:$("#svNewTotal").value===""?inferTotal(name):Math.max(0,parseInt($("#svNewTotal").value,10)||0),memo:"",status:"進行中"};
+    S.drills.push(d);save();render();toast("追加しました");
+  };
+  $("#svWipe").onclick=function(){openConfirm("すべてのデータを削除しますか？（元に戻せません）",function(){S=blankState();save();recDrillId=null;switchTab("save");toast("削除しました")})};
+}
+
+/* ============ init ============ */
+load();
+render();
+</script>
+</body>
+</html>
