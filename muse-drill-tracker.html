@@ -120,6 +120,8 @@ details.paused-sec summary{font-weight:700;color:#b45309;cursor:pointer;padding:
 .toast.show{opacity:.94}
 .empty{padding:22px 14px;text-align:center;color:var(--sub)}
 .memo-line{white-space:pre-wrap;word-break:break-word}
+.stats-line{font-size:14px}
+.drill-memo{font-size:10px}
 a.dl{color:var(--teal);font-weight:700}
 </style>
 </head>
@@ -413,7 +415,7 @@ function renderLog(){
         var reps=it.changes.filter(function(c){return c.repeat});
         var pills=normal.map(function(c){return '<span class="pill">p.'+c.p+"</span>"}).join("");
         var repHtml=reps.length?'<div style="margin-top:2px"><span class="repeat-ico">🔁</span>'+reps.map(function(c){return '<span class="revtxt">p.'+c.p+"</span>"}).join(" ")+"</div>":"";
-        detail+='<div class="card"><div class="drill-name-lg" title="'+esc(name)+'">'+esc(shortOf(name))+'</div><div class="muted" style="margin:1px 0 6px">'+esc(seriesOf(name))+'</div><div class="rowflex" style="align-items:flex-start"><div class="grow">'+pills+repHtml+'</div><button class="xbtn" data-undo="'+it.id+'" aria-label="記録を取り消す">✕</button></div></div>';
+        detail+='<div class="card"><div class="muted" style="margin:0 0 1px">'+esc(seriesOf(name))+'</div><div class="drill-name-lg" title="'+esc(name)+'" style="margin-bottom:6px">'+esc(shortOf(name))+'</div><div class="rowflex" style="align-items:flex-start"><div class="grow">'+pills+repHtml+'</div><button class="xbtn" data-undo="'+it.id+'" aria-label="記録を取り消す">✕</button></div></div>';
       });
     });
   }
@@ -593,8 +595,8 @@ function renderProgress(){
       if(st.weak)statsLine+="・ 要復習"+st.weak+"件";
       if(st.rev)statsLine+=" ・ 復習済み "+st.rev+"件";
       html+='<div class="card"><div class="drill-name" title="'+esc(d.name)+'">'+esc(shortOf(d.name))+'</div>'+
-        '<div class="rowflex" style="margin-top:5px"><span class="status-badge '+badgeCls+'">'+es+'</span><span class="small muted">'+statsLine+'</span></div>'+
-        (d.memo?'<div class="small memo-line" style="margin-top:3px">'+esc(d.memo)+'</div>':"")+
+        '<div class="rowflex" style="margin-top:5px"><span class="status-badge '+badgeCls+'">'+es+'</span><span class="muted stats-line">'+statsLine+'</span></div>'+
+        (d.memo?'<div class="memo-line drill-memo" style="margin-top:3px">'+esc(d.memo)+'</div>':"")+
         '<div class="bar"><i style="width:'+st.pct+'%"></i></div>';
       if(editDrillId===d.id){
         html+='<label class="flabel">教材名</label><input type="text" id="edName" value="'+esc(d.name)+'">'+
