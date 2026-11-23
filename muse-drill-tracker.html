@@ -10,9 +10,15 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="ドリルトラッカー">
 <title>ドリルトラッカー</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230f766e'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3E%E3%83%89%3C/text%3E%3C/svg%3E">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230f766e'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3E%E3%83%89%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/png" href="muse-drill-tracker-icon.png">
+<link rel="apple-touch-icon" href="muse-drill-tracker-icon.png">
 <link rel="manifest" href='data:application/manifest+json,{"name":"ドリルトラッカー","short_name":"ドリル","display":"standalone","background_color":"#ffffff","theme_color":"#0f766e"}'>
+<script>
+/* Apply the saved font-size setting before first paint (no flash of the
+   default size). The setting lives in its own localStorage key and is never
+   part of the backup JSON. */
+try{var _fs=localStorage.getItem("doriruFontScale");var _zm=_fs==="big"?1.15:(_fs==="xl"?1.3:1);if(_zm!==1)document.documentElement.style.zoom=_zm;}catch(e){}
+</script>
 <style>
 :root{
 --bg:#f4f4f2; --card:#ffffff; --ink:#1c2321; --sub:#5c6663; --line:#e2e5e3;
@@ -175,6 +181,16 @@ function fmtJP(s){var d=parseDate(s);if(!d)return s||"";return d.getFullYear()+"
 function fmtMD(s){var d=parseDate(s);if(!d)return "";var w=["日","月","火","水","木","金","土"][d.getDay()];return (d.getMonth()+1)+"/"+d.getDate()+"（"+w+"）"}
 function fmtMDShort(s){var d=parseDate(s);if(!d)return "";return (d.getMonth()+1)+"/"+d.getDate()}
 function toast(msg){var t=$("#toast");t.textContent=msg;t.classList.add("show");setTimeout(function(){t.classList.remove("show")},2200)}
+
+/* ============ font size setting (device-local, not in backups) ============ */
+var FS_KEY="doriruFontScale";
+function fontScale(){try{var v=localStorage.getItem(FS_KEY);return (v==="big"||v==="xl")?v:"std"}catch(e){return "std"}}
+function fontZoom(v){return v==="big"?1.15:(v==="xl"?1.3:1)}
+function applyFontScale(){
+  var z=fontZoom(fontScale());
+  if(z===1)document.documentElement.style.removeProperty("zoom");
+  else document.documentElement.style.zoom=z;
+}
 
 /* ============ drill name handling ============ */
 var SERIES_ORDER=["新版ばっちりくんドリル","旧版ばっちりくんドリル","ばっちりくんドリル","ひとりでとっくん単元別","ひとりでとっくん365日","ひとりでとっくん","ピンポンワーク","ピグマリオン能力育成問題集","ピグマリオン"];
@@ -821,9 +837,13 @@ function renderGood(){
 /* ============ SAVE view ============ */
 function renderSave(){
   var el=$("#view-save");
+  var fsCur=fontScale();
+  function fsBtn(v,label){return '<button class="btn '+(fsCur===v?"":"subbtn")+' grow" data-fs="'+v+'" style="min-height:44px">'+label+"</button>"}
   el.innerHTML='<h1>保存</h1>'+
+  '<div class="card"><div style="font-weight:800">文字の大きさ</div><p class="small muted">アプリ全体（タブバーも含む）の表示の大きさを切り替えます。設定はこの端末に保存され、次回開いたときもそのまま使えます。</p>'+
+  '<div class="rowflex">'+fsBtn("std","標準")+fsBtn("big","大きめ")+fsBtn("xl","特大")+"</div></div>"+
   '<div class="card"><div style="font-weight:800">バックアップ</div><p class="small muted">データはこの端末のブラウザ内（localStorage）にのみ保存され、外部に送信されることはありません。週に1回ほど書き出しをして保管してください。</p>'+
-  '<p class="small muted">ファイルの版：2026-11-24 v10（記録の保存ボタン：変更0件では無効・文言「保存する」、変更があると「保存する（変更 N件）」で有効化／進捗カードの教材メモを12pxに拡大・統計行14px）</p>'+
+  '<p class="small muted">ファイルの版：2026-11-24 v11（保存タブに「文字の大きさ」設定を追加：標準／大きめ／特大でアプリ全体を拡大、設定は端末に保存／記録の保存ボタン・教材メモ12px・統計行14pxは継続）</p>'+
   '<button class="btn" id="svExport" style="width:100%">JSONを書き出す（ダウンロード）</button>'+
   '<button class="btn subbtn" id="svHtml" style="width:100%;margin-top:8px">単体HTMLを書き出す（muse-drill-tracker.html）</button>'+
   '<label class="flabel">バックアップを読み込む（旧GitHub版の形式にも対応）</label><input type="file" id="svImport" accept=".json,application/json"></div>'+
@@ -834,6 +854,11 @@ function renderSave(){
   '<div class="card"><div style="font-weight:800">iPhoneでアプリのように使う</div><p class="small">Safariでこのページを開き、共有ボタン →「ホーム画面に追加」を選ぶと、アプリのようにホーム画面から開けます。このファイル1つで動くので、GitHub Pagesなどに置いてもそのまま使えます。</p>'+
   '<p class="small muted">現在のデータ：教材 '+S.drills.length+'冊 ／ ログ '+S.logs.length+'件 ／ 自由記録 '+S.freeLogs.length+'件 ／ 良問 '+S.goods.length+'件</p>'+
   '<button class="btn danger" id="svWipe" style="width:100%">データをすべて削除</button></div>';
+  el.querySelectorAll("[data-fs]").forEach(function(b){b.onclick=function(){
+    try{localStorage.setItem(FS_KEY,b.dataset.fs)}catch(e){}
+    applyFontScale();renderSave();updateFab();
+    toast("文字の大きさを変更しました");
+  }});
   $("#svExport").onclick=function(){
     var blob=new Blob([JSON.stringify(exportData(),null,2)],{type:"application/json"});
     var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="drill-tracker-backup-"+todayStr()+".json";document.body.appendChild(a);a.click();a.remove();
@@ -868,6 +893,7 @@ function renderSave(){
 
 /* ============ init ============ */
 load();
+applyFontScale();
 render();
 </script>
 </body>
