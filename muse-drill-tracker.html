@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="light">
 <meta name="theme-color" content="#0f766e">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -18,10 +18,7 @@
 --bg:#f4f4f2; --card:#ffffff; --ink:#1c2321; --sub:#5c6663; --line:#e2e5e3;
 --teal:#0f766e; --teal-d:#0b5e57; --blue:#2563eb; --red:#dc2626; --green:#16a34a; --orange:#f97316;
 --chip:#eef4f3; --input:#f7f7f5; --shadow:0 1px 3px rgba(0,0,0,.07);
-color-scheme: light dark;
-}
-@media (prefers-color-scheme: dark){
-:root{ --bg:#171a19; --card:#222625; --ink:#eceeed; --sub:#a7b0ad; --line:#363c3a; --chip:#26302e; --input:#2a2f2d; --shadow:0 1px 3px rgba(0,0,0,.4);}
+color-scheme: light;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -41,16 +38,16 @@ h1{font-size:19px;margin:6px 2px 10px}
 .btn.danger{background:#fff;color:var(--red);border:1px solid var(--line)}
 .btn:disabled{opacity:.45}
 input[type="text"],input[type="number"],input[type="date"],input[type="search"],textarea,select{background:var(--input);border:1px solid var(--line);border-radius:9px;padding:7px 9px;width:100%}
+input[type="date"]{-webkit-appearance:none;appearance:none;min-width:0;max-width:100%}
 textarea{resize:vertical}
 label.flabel{display:block;font-size:12px;color:var(--sub);margin:10px 0 4px;font-weight:600}
 /* bottom tabs */
 nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;z-index:60;padding-bottom:env(safe-area-inset-bottom)}
-nav.tabs button{flex:1;background:none;border:none;color:var(--sub);font-size:12px;font-weight:600;padding:9px 0 7px;position:relative;min-height:48px}
+nav.tabs button{flex:1;background:none;border:none;color:var(--sub);font-size:15px;font-weight:600;padding:11px 0 9px;position:relative;min-height:52px}
 nav.tabs button.on{color:var(--teal)}
-.badge{position:absolute;top:3px;right:calc(50% - 24px);background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:999px;min-width:19px;height:19px;line-height:19px;padding:0 4px}
+.badge{position:absolute;top:3px;right:calc(50% - 28px);background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:999px;min-width:19px;height:19px;line-height:19px;padding:0 4px}
 /* pills */
 .pill{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:600;margin:0 5px 5px 0;background:#e8ebff;color:#2b3a8f}
-@media (prefers-color-scheme: dark){.pill{background:#2c3355;color:#c3cbff}}
 .pill.rev{background:var(--green);color:#fff}
 .revtxt{color:var(--green);font-weight:700;font-size:13px}
 .rv-series{font-size:11px;color:var(--sub);font-weight:600}
@@ -76,7 +73,7 @@ nav.tabs button.on{color:var(--teal)}
 .cell.done{background:var(--blue);border-color:var(--blue);color:#fff}
 .cell.weak{background:var(--red);border-color:var(--red);color:#fff}
 .cell.reviewed{background:var(--blue);border-color:var(--blue);color:#fff}
-.cell.fuku{position:absolute;right:2px;bottom:1px;font-size:9px;background:#fff;color:var(--blue);border-radius:4px;padding:0 3px;line-height:1.5;font-weight:800}
+.cell .fuku{position:absolute;top:1px;right:2px;font-size:9px;background:#fff;color:var(--blue);border-radius:4px;padding:0 3px;line-height:1.5;font-weight:800;pointer-events:none}
 .cell.today{outline:3px solid var(--orange);outline-offset:-1px}
 .cell.pending{box-shadow:inset 0 0 0 2px var(--ink)}
 .legend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:11.5px;color:var(--sub);margin-top:8px}
@@ -85,8 +82,8 @@ nav.tabs button.on{color:var(--teal)}
 /* custom dropdown */
 .dd{position:relative}
 .dd-btn{width:100%;text-align:left;background:var(--input);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-height:52px}
-.dd-btn.s1{display:block;font-size:11.5px;color:var(--sub);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dd-btn.s2{display:block;font-size:14.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dd-btn .s1{display:block;font-size:11.5px;color:var(--sub);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dd-btn .s2{display:block;font-size:14.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dd-list{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);max-height:46vh;overflow:auto;z-index:50;padding:4px}
 .dd-head{font-size:11.5px;color:var(--teal);font-weight:800;padding:8px 8px 3px}
 .dd-item{display:block;width:100%;text-align:left;background:none;border:none;padding:8px;border-radius:8px;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:38px}
