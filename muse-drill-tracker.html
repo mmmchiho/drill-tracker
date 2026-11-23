@@ -648,9 +648,9 @@ function renderProgress(){
       var statsLine=st.total?st.done+"/"+st.total+"ページ（"+st.pct+"%）":"ページ数未設定";
       if(st.weak)statsLine+="・ 要復習"+st.weak+"件";
       if(st.rev)statsLine+=(st.weak?" ・ ":"・ ")+"復習済み "+st.rev+"件";
-      html+='<div class="card"><div class="drill-name" title="'+esc(d.name)+'">'+esc(shortOf(d.name))+'</div>'+
-        '<div class="rowflex" style="margin-top:5px"><span class="status-badge '+badgeCls+'">'+es+'</span><span class="muted stats-line">'+statsLine+'</span></div>'+
-        (d.memo?'<div class="memo-line drill-memo" style="margin-top:3px">'+esc(d.memo)+'</div>':"")+
+      html+='<div class="card"><div class="rowflex"><span class="drill-name grow" title="'+esc(d.name)+'">'+esc(shortOf(d.name))+'</span><span class="status-badge '+badgeCls+'">'+es+'</span></div>'+
+        '<div style="margin-top:5px"><span class="muted stats-line" style="font-size:14px">'+statsLine+'</span></div>'+
+        (d.memo?'<div class="memo-line drill-memo" style="margin-top:3px;font-size:10px">'+esc(d.memo)+'</div>':"")+
         '<div class="bar"><i style="width:'+st.pct+'%"></i></div>';
       if(editDrillId===d.id){
         html+='<label class="flabel">教材名</label><input type="text" id="edName" value="'+esc(d.name)+'">'+
@@ -823,7 +823,7 @@ function renderSave(){
   var el=$("#view-save");
   el.innerHTML='<h1>保存</h1>'+
   '<div class="card"><div style="font-weight:800">バックアップ</div><p class="small muted">データはこの端末のブラウザ内（localStorage）にのみ保存され、外部に送信されることはありません。週に1回ほど書き出しをして保管してください。</p>'+
-  '<p class="small muted">ファイルの版：2026-11-24 v8（進捗の教材メモが統計行より大きく見える問題を修正：iOSのテキスト自動拡大を停止し、メモ10px／統計行14pxを確実に適用）</p>'+
+  '<p class="small muted">ファイルの版：2026-11-24 v9（進捗カード：状態ピルを教材名の行の右端へ移動／メモ10px・統計行14pxを要素への直接指定でも保証）</p>'+
   '<button class="btn" id="svExport" style="width:100%">JSONを書き出す（ダウンロード）</button>'+
   '<button class="btn subbtn" id="svHtml" style="width:100%;margin-top:8px">単体HTMLを書き出す（muse-drill-tracker.html）</button>'+
   '<label class="flabel">バックアップを読み込む（旧GitHub版の形式にも対応）</label><input type="file" id="svImport" accept=".json,application/json"></div>'+
