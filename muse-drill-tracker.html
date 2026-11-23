@@ -21,7 +21,7 @@
 color-scheme: light;
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;font-size:14px;line-height:1.45;-webkit-tap-highlight-color:transparent}
 button,[role="button"],select,input,summary{min-height:36px}
 button{font:inherit;cursor:pointer;color:inherit}
@@ -128,8 +128,8 @@ details.paused-sec summary{font-weight:700;color:#b45309;cursor:pointer;padding:
 .empty{padding:22px 14px;text-align:center;color:var(--sub)}
 .log-series{font-size:11px;color:var(--sub);font-weight:600;margin:0 0 1px}
 .memo-line{white-space:pre-wrap;word-break:break-word}
-.muted.stats-line{font-size:14px}
-.memo-line.drill-memo{font-size:10px}
+.muted.stats-line{font-size:14px !important}
+.memo-line.drill-memo{font-size:10px !important;font-weight:400;line-height:1.5}
 a.dl{color:var(--teal);font-weight:700}
 /* dropdown text must stay ink-black (closed label + list items, both tabs) */
 .dd-btn,.dd-btn .s2,.dd-item{color:#1c2321 !important}
@@ -823,7 +823,7 @@ function renderSave(){
   var el=$("#view-save");
   el.innerHTML='<h1>保存</h1>'+
   '<div class="card"><div style="font-weight:800">バックアップ</div><p class="small muted">データはこの端末のブラウザ内（localStorage）にのみ保存され、外部に送信されることはありません。週に1回ほど書き出しをして保管してください。</p>'+
-  '<p class="small muted">ファイルの版：2026-11-24 v7（試作との総点検反映：プルダウン番号順・復習の分割と「まだ苦手」・進捗/ログ/良問の表記統一）</p>'+
+  '<p class="small muted">ファイルの版：2026-11-24 v8（進捗の教材メモが統計行より大きく見える問題を修正：iOSのテキスト自動拡大を停止し、メモ10px／統計行14pxを確実に適用）</p>'+
   '<button class="btn" id="svExport" style="width:100%">JSONを書き出す（ダウンロード）</button>'+
   '<button class="btn subbtn" id="svHtml" style="width:100%;margin-top:8px">単体HTMLを書き出す（muse-drill-tracker.html）</button>'+
   '<label class="flabel">バックアップを読み込む（旧GitHub版の形式にも対応）</label><input type="file" id="svImport" accept=".json,application/json"></div>'+
