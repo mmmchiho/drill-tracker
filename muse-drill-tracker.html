@@ -55,11 +55,12 @@ nav.tabs button.on{color:var(--teal)}
 /* pills */
 .pill{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:600;margin:0 5px 5px 0;background:#e8ebff;color:#2b3a8f}
 .pill.rev{background:var(--green);color:#fff}
+.pill.rev-pill{background:#dcfce7;color:#15803d}
 .revtxt{color:var(--green);font-weight:700;font-size:13px}
 .rv-series{font-size:13px;color:var(--sub);font-weight:600}
 .repeat-ico{color:var(--green);font-size:14px;margin-right:2px;vertical-align:1px}
 .xbtn{flex:none;width:26px;height:26px;min-height:26px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--sub);font-size:13px;line-height:1;padding:0;margin-left:auto}
-.status-badge{flex:none;border-radius:999px;padding:2px 10px;font-size:11px;font-weight:700;color:#fff;background:var(--blue)}
+.status-badge{flex:none;border-radius:999px;padding:2px 10px;font-size:16px;font-weight:700;color:#fff;background:var(--blue)}
 .status-badge.paused{background:#6b7280}
 .status-badge.done{background:var(--teal)}
 .status-badge.ended{background:#44403c}
@@ -111,7 +112,7 @@ nav.tabs button.on{color:var(--teal)}
 .rv-name{font-size:14px;font-weight:700;line-height:1.35}
 .rv-name .pg{font-size:17px}
 .card.due-card{box-shadow:0 0 0 2px var(--red)}
-.tag.kind{background:#d97706;color:#fff}
+.tag.kind{background:#d97706;color:#fff;font-size:16px;padding:2px 10px}
 .tag.graypill{background:#6b7280;color:#fff}
 .dd-btn{position:relative;padding-right:30px}
 .dd-btn::after{content:"▾";position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--sub)}
@@ -409,7 +410,7 @@ function switchTab(tab){
   window.scrollTo(0,0);
 }
 document.querySelectorAll("nav.tabs button").forEach(function(b){b.addEventListener("click",function(){
-  if(curTab==="review"&&b.dataset.tab==="review"){window.scrollTo({top:0,behavior:"smooth"});return}
+  if(curTab==="review"&&b.dataset.tab==="review"){goTop();return}
   switchTab(b.dataset.tab);
 })});
 function render(){
@@ -425,18 +426,47 @@ function openModal(html){$("#modalBox").innerHTML=html;$("#modalBg").classList.a
 function closeModal(){$("#modalBg").classList.remove("open")}
 $("#modalBg").addEventListener("click",function(e){if(e.target===this)closeModal()});
 function updateFab(){
-  var fb=$("#fabBottom"),ft=$("#fabTop");if(!fb||!ft)return;
-  var y=window.scrollY||document.documentElement.scrollTop||0;
-  var max=(document.documentElement.scrollHeight||document.body.scrollHeight)-window.innerHeight;
+  var active=document.querySelector(".view.active");
+  var fb=active?active.querySelector("#fabBottom"):$("#fabBottom"),ft=active?active.querySelector("#fabTop"):$("#fabTop");if(!fb||!ft)return;
+  var sc=scrollEl();
+  var y=(sc?sc.scrollTop:0)||window.scrollY||document.documentElement.scrollTop||0;
+  var max=Math.max(sc?sc.scrollHeight||0:0,document.body?document.body.scrollHeight||0:0)-window.innerHeight;
   fb.style.display=(max-y>40)?"":"none";
   ft.style.display=(y>40)?"":"none";
+}
+/* The element that actually scrolls the page. window.scrollTo() aimed at a
+   height computed from body/documentElement can stop short of the real end
+   on long lists (smooth-scroll clamping, display zoom), so the ↑/↓ buttons
+   drive this container — and aim at a sentinel placed after the last card —
+   instead of a precomputed pixel height. */
+function scrollEl(){return document.scrollingElement||document.documentElement}
+function goTop(){
+  var sc=scrollEl();
+  if(sc&&sc.scrollTo)sc.scrollTo({top:0,behavior:"smooth"});
+  else window.scrollTo({top:0,behavior:"smooth"});
+}
+function goBottom(viewEl){
+  var tab=curTab;
+  var end=viewEl?viewEl.querySelector(".page-end"):null;
+  if(end&&end.scrollIntoView){try{end.scrollIntoView({block:"end",behavior:"smooth"})}catch(e){end.scrollIntoView()}}
+  else{var sc=scrollEl();if(sc&&sc.scrollTo)sc.scrollTo({top:sc.scrollHeight,behavior:"smooth"});else window.scrollTo({top:document.body?document.body.scrollHeight:0,behavior:"smooth"})}
+  // Insurance: once the smooth scroll settles, snap the real scroll container
+  // to its full height so the last element is reached even when the smooth
+  // animation was clamped. Skipped if the user moved to another tab or
+  // scrolled back toward the top in the meantime.
+  [450,900].forEach(function(ms){setTimeout(function(){
+    if(curTab!==tab)return;
+    var s2=scrollEl();if(!s2)return;
+    var max=s2.scrollHeight-window.innerHeight;
+    if(max>0&&s2.scrollTop>max*0.5)s2.scrollTop=s2.scrollHeight;
+  },ms)});
 }
 window.addEventListener("scroll",updateFab,{passive:true});
 </script>
 <script>
 "use strict";
 /* ============ LOG view ============ */
-var logMonth=null, logSelDate=null, logShowAll=false;
+var logMonth=null, logSelDate=null, logShowAll=true;
 function logsByDate(){
   var map={};
   // Keys are normalized to YYYY-MM-DD here as well, so a log stored in ISO or
@@ -484,8 +514,8 @@ function renderLog(){
         var normal=it.changes.filter(function(c){return !c.repeat});
         var reps=it.changes.filter(function(c){return c.repeat});
         var pills=normal.map(function(c){return '<span class="pill">p.'+c.p+"</span>"}).join("");
-        var repHtml=reps.length?'<div style="margin-top:2px"><span class="repeat-ico">🔁</span>'+reps.map(function(c){return '<span class="revtxt">p.'+c.p+"</span>"}).join(" ")+"</div>":"";
-        detail+='<div class="card"><div class="log-series">'+esc(seriesOf(name))+'</div><div class="drill-name-lg" title="'+esc(name)+'" style="margin-bottom:6px">'+esc(shortOf(name))+'</div><div class="rowflex" style="align-items:flex-start"><div class="grow">'+pills+repHtml+'</div><button class="xbtn" data-undo="'+it.id+'" aria-label="記録を取り消す">✕</button></div></div>';
+        var repPills=reps.map(function(c){return '<span class="pill rev-pill">🔁 p.'+c.p+"</span>"}).join("");
+        detail+='<div class="card"><div class="log-series">'+esc(seriesOf(name))+'</div><div class="drill-name-lg" title="'+esc(name)+'" style="margin-bottom:6px">'+esc(shortOf(name))+'</div><div class="rowflex" style="align-items:flex-start"><div class="grow">'+pills+repPills+'</div><button class="xbtn" data-undo="'+it.id+'" aria-label="記録を取り消す">✕</button></div></div>';
       });
     });
   }
@@ -600,6 +630,7 @@ function renderRecord(){
    '<label class="flabel">教材</label><div class="dd"><button class="dd-btn" id="ddBtn"><span class="s1">'+esc(seriesOf(d.name))+'</span><span class="s2" style="color:#1c2321">'+esc(shortOf(d.name))+statusIcon(d)+'</span></button><div class="dd-list" id="ddList" style="display:none">'+ddList+"</div></div>"+
    '<div class="grid">'+cells+'</div>'+schedHtml+stillHtml+
    '<div class="legend"><span><span class="sw b"></span>実施済み</span><span><span class="sw r"></span>苦手（未復習）</span><span><span class="sw b"></span>＋復＝苦手だったが復習済み</span><span><span class="sw o"></span>枠＝選んだ日に変更したページ</span><span>タップするたびに切り替わります</span></div>'+
+   '<div style="height:1.45em" aria-hidden="true"></div>'+
    '<button class="btn" id="recSave" style="width:100%"'+(Object.keys(pending).length?"":' disabled')+'>'+(Object.keys(pending).length?("保存する（変更 "+Object.keys(pending).length+"件）"):"保存する")+'</button></div>'+
    '<div class="card"><div style="font-weight:800;margin-bottom:2px">苦手メモ</div>'+memoHtml+"</div>"+
    '<div class="card"><div style="font-weight:800;margin-bottom:6px">その他の記録</div>'+
@@ -742,37 +773,60 @@ function renderReview(){
   var el=$("#view-review");
   var items=reviewItems();
   var mainAll=items.filter(function(x){return !x.paused});
-  var pausedAll=items.filter(function(x){return x.paused});
-  var q=reviewSearch.trim().toLowerCase();
-  function matchRv(x){if(!q)return true;return x.drill.name.toLowerCase().indexOf(q)>=0||shortOf(x.drill.name).toLowerCase().indexOf(q)>=0||String(x.page)===q.replace(/^p\.?/,"")}
-  var main=mainAll.filter(matchRv);
-  var paused=pausedAll.filter(matchRv);
-  var t=todayStr();
-  var due=main.filter(function(x){return x.st.remind&&x.st.remind<=t});
-  var upcoming=main.filter(function(x){return !(x.st.remind&&x.st.remind<=t)});
   if(!reviewDate)reviewDate=todayStr();
   var html='<h1>復習</h1>';
-  html+='<div class="card" style="padding:10px 12px"><label class="flabel" style="margin:0 0 4px">記録する日付（「復習した」「まだ苦手」に使う日付）</label><input type="date" id="rvRecDate" value="'+reviewDate+'"><p class="small muted" style="margin:6px 0 0">初期値は今日です。昨日やった分を付ける時は、ここを昨日に変えてからボタンを押してください。</p></div>';
+  html+='<div class="card" style="padding:10px 12px"><label class="flabel" style="margin:0 0 4px">記録する日付（「復習した」「まだ苦手」に使う日付）</label><input type="date" id="rvRecDate" value="'+reviewDate+'"></div>';
   if(!items.length){
     html+='<div class="card"><div style="font-weight:800">復習待ちのページはありません</div><p class="small muted" style="margin:6px 0 0">記録で「苦手」にしたページが、約1ヶ月後にここへ出てきます。</p></div>';
   } else {
     html+='<p style="font-weight:800;margin:0 2px 6px">復習リスト 全'+mainAll.length+'件 <span class="muted small" style="font-weight:400">復習期日の早い順に並んでいます</span></p>'+
-     '<div class="card" style="padding:8px 10px"><input type="search" id="rvSearch" placeholder="教材名やページ番号で絞り込む（例：はさみぎり、24）" value="'+esc(reviewSearch)+'"></div>';
-    if(q){
-      var msg=main.length?("「"+esc(reviewSearch.trim())+"」に合うものが "+main.length+"件 あります"):(paused.length?("「"+esc(reviewSearch.trim())+"」に合うものは「一時ストップ中の教材の復習」に "+paused.length+"件 あります"):("「"+esc(reviewSearch.trim())+"」に合うものは復習リストに入っていません"));
-      html+='<p class="small muted" style="margin:0 2px 8px">'+msg+"</p>";
-    }
-    if(due.length)html+='<div style="font-weight:800;color:var(--red);margin:12px 2px 6px">復習の時期が来たもの（'+due.length+'件）</div>'+due.map(reviewCard).join("");
-    if(upcoming.length)html+='<div style="font-weight:800;margin:12px 2px 6px">これからの復習予定（'+upcoming.length+'件）</div>'+upcoming.map(reviewCard).join("");
-    if(paused.length){
-      html+='<details class="paused-sec"><summary>一時ストップ中の教材の復習（'+paused.length+'件）</summary>'+paused.map(reviewCard).join("")+"</details>";
-    }
+     '<div class="card" style="padding:8px 10px"><input type="search" id="rvSearch" style="font-size:16px" placeholder="教材名やページ番号で絞り込む（例：はさみぎり、24）" value="'+esc(reviewSearch)+'"></div>'+
+     '<div id="rvResults"></div>';
   }
-  html+='<div class="fab-col"><button class="fab" id="fabTop" title="先頭へ">↑</button><button class="fab" id="fabBottom" title="一番下へ">↓</button></div>';
+  html+='<div class="page-end" style="height:2px" aria-hidden="true"></div><div class="fab-col"><button class="fab" id="fabTop" title="先頭へ">↑</button><button class="fab" id="fabBottom" title="一番下へ">↓</button></div>';
   el.innerHTML=html;
-  var si=$("#rvSearch");if(si)si.oninput=function(){reviewSearch=si.value;var pos=si.selectionStart;renderReview();var n=$("#rvSearch");if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}}};
+  renderReviewResults();
+  /* Typing in the search box must never rebuild the input itself: replacing
+     the focused node on every keystroke cancels the Japanese IME composition
+     on iPhone (and drops the keyboard), so characters cannot be entered.
+     Only the results under the box are refreshed; the input stays as-is. */
+  var si=$("#rvSearch");if(si)si.oninput=function(){reviewSearch=si.value;renderReviewResults()};
   var rd=$("#rvRecDate");if(rd)rd.onchange=function(){reviewDate=rd.value||todayStr()};
-  el.querySelectorAll("[data-rvdone]").forEach(function(b){b.onclick=function(){
+  var rvFabTop=el.querySelector("#fabTop"),rvFabBottom=el.querySelector("#fabBottom");
+  if(rvFabTop)rvFabTop.onclick=function(){goTop()};
+  if(rvFabBottom)rvFabBottom.onclick=function(){goBottom(el)};
+  updateFab();
+}
+/* Refresh only the filtered list below the search box. The search input
+   lives outside #rvResults, so it is never destroyed while typing and the
+   IME composition / keyboard focus stay intact. */
+function renderReviewResults(){
+  var el=$("#view-review");
+  var box=el.querySelector("#rvResults");
+  if(!box)return;
+  var det=box.querySelector("details.paused-sec");
+  var wasOpen=!!(det&&det.open);
+  var items=reviewItems();
+  var pausedAll=items.filter(function(x){return x.paused});
+  var q=reviewSearch.trim().toLowerCase();
+  function matchRv(x){if(!q)return true;return x.drill.name.toLowerCase().indexOf(q)>=0||shortOf(x.drill.name).toLowerCase().indexOf(q)>=0||String(x.page)===q.replace(/^p\.?/,"")}
+  var main=items.filter(function(x){return !x.paused}).filter(matchRv);
+  var paused=pausedAll.filter(matchRv);
+  var t=todayStr();
+  var due=main.filter(function(x){return x.st.remind&&x.st.remind<=t});
+  var upcoming=main.filter(function(x){return !(x.st.remind&&x.st.remind<=t)});
+  var html="";
+  if(q){
+    var msg=main.length?("「"+esc(reviewSearch.trim())+"」に合うものが "+main.length+"件 あります"):(paused.length?("「"+esc(reviewSearch.trim())+"」に合うものは「一時ストップ中の教材の復習」に "+paused.length+"件 あります"):("「"+esc(reviewSearch.trim())+"」に合うものは復習リストに入っていません"));
+    html+='<p class="small muted" style="margin:0 2px 8px">'+msg+"</p>";
+  }
+  if(due.length)html+='<div style="font-weight:800;color:var(--red);margin:12px 2px 6px">復習の時期が来たもの（'+due.length+'件）</div>'+due.map(reviewCard).join("");
+  if(upcoming.length)html+='<div style="font-weight:800;margin:12px 2px 6px">これからの復習予定（'+upcoming.length+'件）</div>'+upcoming.map(reviewCard).join("");
+  if(paused.length){
+    html+='<details class="paused-sec"'+(wasOpen?" open":"")+'><summary>一時ストップ中の教材の復習（'+paused.length+'件）</summary>'+paused.map(reviewCard).join("")+"</details>";
+  }
+  box.innerHTML=html;
+  box.querySelectorAll("[data-rvdone]").forEach(function(b){b.onclick=function(){
     var pp=b.dataset.rvdone.split("|");var d=drillById(pp[0]);var pg=+pp[1];if(!d)return;
     var mm=pageMap(d.id);var cur=mm[String(pg)];if(!cur||cur.s!=="weak")return;
     var useDate=reviewDate||todayStr();
@@ -782,7 +836,7 @@ function renderReview(){
     S.logs.push({id:uid(),date:useDate,drillId:d.id,changes:[{p:pg,before:before,after:JSON.parse(JSON.stringify(cur)),repeat:true}],kind:"review"});
     save();render();toast("復習済みにしました");
   }});
-  el.querySelectorAll("[data-rvstill]").forEach(function(b){b.onclick=function(){
+  box.querySelectorAll("[data-rvstill]").forEach(function(b){b.onclick=function(){
     var pp=b.dataset.rvstill.split("|");var d=drillById(pp[0]);var pg=+pp[1];if(!d)return;
     var mm=pageMap(d.id);var cur=mm[String(pg)];if(!cur||cur.s!=="weak")return;
     var useDate=reviewDate||todayStr();
@@ -792,17 +846,16 @@ function renderReview(){
     S.logs.push({id:uid(),date:useDate,drillId:d.id,changes:[{p:pg,before:before,after:JSON.parse(JSON.stringify(cur)),repeat:true}],kind:"review"});
     save();render();toast("まだ苦手として記録しました（期日は約1ヶ月後）");
   }});
-  el.querySelectorAll("[data-rvdate]").forEach(function(inp){inp.onchange=function(){
+  box.querySelectorAll("[data-rvdate]").forEach(function(inp){inp.onchange=function(){
     var pp=inp.dataset.rvdate.split("|");var mm=pageMap(pp[0]);var cur=mm[pp[1]];if(cur&&inp.value){cur.remind=inp.value;save();render();toast("復習予定日を変更しました")}
   }});
-  el.querySelectorAll("[data-rvmain]").forEach(function(b){b.onclick=function(){
+  box.querySelectorAll("[data-rvmain]").forEach(function(b){b.onclick=function(){
     var pp=b.dataset.rvmain.split("|");var mm=pageMap(pp[0]);if(mm[pp[1]]){mm[pp[1]].main=true;save();render();toast("メインの復習リストに出しました")}
   }});
-  el.querySelectorAll("[data-rvpause]").forEach(function(b){b.onclick=function(){
+  box.querySelectorAll("[data-rvpause]").forEach(function(b){b.onclick=function(){
     var pp=b.dataset.rvpause.split("|");var mm=pageMap(pp[0]);if(mm[pp[1]]){delete mm[pp[1]].main;save();render();toast("一時ストップ側に戻しました")}
   }});
-  $("#fabTop").onclick=function(){window.scrollTo({top:0,behavior:"smooth"})};
-  $("#fabBottom").onclick=function(){window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"})};
+  box.querySelectorAll("details").forEach(function(dt){dt.addEventListener("toggle",function(){updateFab()})});
   updateFab();
 }
 
@@ -835,7 +888,13 @@ function renderGood(){
     '<div class="rowflex" style="margin-top:8px"><button class="btn grow" data-gddone="'+g.id+'" style="background:#d97706">取り組んだ</button><button class="btn subbtn" data-gddel="'+g.id+'" style="color:var(--red)">削除</button></div></div>';
   });
   if(done.length)html+='<details class="paused-sec"><summary>取り組み済み（'+done.length+'件）</summary>'+done.map(function(g){var d=drillById(g.drillId);var gSeries=d?seriesOf(d.name):"";return '<div class="card">'+(gSeries&&gSeries!=="その他"?'<div class="rv-series">'+esc(gSeries)+'</div>':"")+'<div class="rv-name">'+esc(d?shortOf(d.name):"")+' <span class="pg">'+g.pages.map(function(p){return "p."+p}).join(" ")+'</span></div>'+(g.memo?'<div class="memo-line" style="margin-top:3px;font-size:14px">'+esc(g.memo)+"</div>":"")+'<div class="rowflex" style="margin-top:6px"><span class="small grow" style="font-size:14px">記録日：'+(g.created?fmtMDShort(g.created):"―")+'　リマインド：'+fmtJP(g.remind)+(g.doneDate?"　取り組んだ："+fmtMDShort(g.doneDate):"")+'</span></div><div class="rowflex" style="margin-top:6px"><button class="btn subbtn" data-gdundo="'+g.id+'" style="min-height:32px;padding:3px 10px">取り消し</button><button class="btn subbtn" data-gddel="'+g.id+'" style="min-height:32px;padding:3px 10px;color:var(--red)">削除</button></div></div>'}).join("")+"</details>";
+  html+='<div class="page-end" style="height:2px" aria-hidden="true"></div><div class="fab-col"><button class="fab" id="fabTop" title="先頭へ">↑</button><button class="fab" id="fabBottom" title="一番下へ">↓</button></div>';
   el.innerHTML=html;
+  var gdFabTop=el.querySelector("#fabTop"),gdFabBottom=el.querySelector("#fabBottom");
+  if(gdFabTop)gdFabTop.onclick=function(){goTop()};
+  if(gdFabBottom)gdFabBottom.onclick=function(){goBottom(el)};
+  el.querySelectorAll("details").forEach(function(dt){dt.addEventListener("toggle",function(){updateFab()})});
+  updateFab();
   var gdBtn=$("#gdDdBtn"),gdL=$("#gdDdList");
   if(gdBtn&&gdL){
     var gdOpen=false;
@@ -864,7 +923,7 @@ function renderSave(){
   '<div class="card"><div style="font-weight:800">文字の大きさ</div><p class="small muted">アプリ全体（タブバーも含む）の表示の大きさを切り替えます。設定はこの端末に保存され、次回開いたときもそのまま使えます。</p>'+
   '<div class="rowflex">'+fsBtn("std","標準")+fsBtn("big","大きめ")+fsBtn("xl","特大")+"</div></div>"+
   '<div class="card"><div style="font-weight:800">バックアップ</div><p class="small muted">データはこの端末のブラウザ内（localStorage）にのみ保存され、外部に送信されることはありません。週に1回ほど書き出しをして保管してください。</p>'+
-  '<p class="small muted">ファイルの版：2026-11-24 v13（変更ページの枠を内側の白枠のみに変更／良問メモを14pxにし記録日とリマインドを同じ行に／新版44の教材メモ初期値を追加／ログのカレンダーを試作と同じ7列固定（minmax）にし記録グリッドを試作と同じ5列（広い画面8列）に変更／記録に「やった・まだ苦手」ボタンを追加／復習タブで記録する日付を選べるように変更）</p>'+
+  '<p class="small muted">ファイルの版：2026-11-24 v17（復習リストの検索欄で文字がうまく打てない不具合を修正：入力のたびに検索欄ごと画面を作り直していたため日本語変換が中断されていたのを、検索欄はそのままに結果リストだけを更新する方式に変更）</p>'+
   '<button class="btn" id="svExport" style="width:100%">JSONを書き出す（ダウンロード）</button>'+
   '<button class="btn subbtn" id="svHtml" style="width:100%;margin-top:8px">単体HTMLを書き出す（muse-drill-tracker.html）</button>'+
   '<label class="flabel">バックアップを読み込む（旧GitHub版の形式にも対応）</label><input type="file" id="svImport" accept=".json,application/json"></div>'+
@@ -899,7 +958,7 @@ function renderSave(){
         if(data.app==="doriru-tracker"&&data.version===2){importOwn(data)}
         else if(data.drills&&data.logs){importOld(data)}
         else{toast("対応していない形式のファイルです");return}
-        recDrillId=null;pending={};switchTab("log");toast("読み込みました");
+        recDrillId=null;pending={};logSelDate=null;logShowAll=true;switchTab("log");toast("読み込みました");
       }catch(err){toast("読み込みに失敗しました")}
     };r.readAsText(f);
   };
