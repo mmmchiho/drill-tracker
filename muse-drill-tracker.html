@@ -71,7 +71,7 @@ nav.tabs button.on{color:var(--teal)}
 .series-head.cnt{color:var(--sub);font-size:13px;font-weight:600;margin-left:6px}
 .chips{display:flex;gap:7px;flex-wrap:wrap;margin:2px 0 4px}
 .chip{border:1.5px solid var(--teal);color:var(--teal);background:var(--card);border-radius:999px;padding:5px 12px;font-weight:700;font-size:12.5px;min-height:34px}
-.drill-name{font-weight:700;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.drill-name{font-weight:700;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .drill-name-lg{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* record grid */
 .grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-top:8px;width:100%}
@@ -293,7 +293,15 @@ function drillIdx(d){for(var i=0;i<S.drills.length;i++)if(S.drills[i].id===d.id)
 function cmpByNumber(a,b){var ka=drillKey(a),kb=drillKey(b);if(ka[0]!==kb[0])return ka[0]-kb[0];if(ka[1]!==kb[1])return ka[1]-kb[1];return drillIdx(a)-drillIdx(b)}
 /* Progress only: complete drills sink to the end of their series (number
    order among themselves); everything else interleaves purely by number. */
-function cmpDrills(a,b){var ca=effStatus(a)==="完了"?1:0,cb=effStatus(b)==="完了"?1:0;if(ca!==cb)return ca-cb;return cmpByNumber(a,b)}
+function cmpDrills(a,b){
+  /* 365日 exception: its six volumes form one sequence (01基礎1-A → 06基礎3-B)
+     worked through in volume order, so they always list 01→06. Sinking a
+     completed volume to the end of the series (the rule below) put 02 —
+     auto-judged 完了 at 31/31 with no weak pages left — after 06, which read
+     as the set being out of order. Other series keep the sink rule. */
+  if(seriesOf(a.name)==="ひとりでとっくん365日"&&seriesOf(b.name)==="ひとりでとっくん365日")return cmpByNumber(a,b);
+  var ca=effStatus(a)==="完了"?1:0,cb=effStatus(b)==="完了"?1:0;if(ca!==cb)return ca-cb;return cmpByNumber(a,b);
+}
 function statusIcon(d){var es=effStatus(d);return es==="完了"?" ☑️":(es==="一時ストップ"?" 🚫":"")}
 </script>
 <script>
@@ -504,7 +512,7 @@ function renderLog(){
       var dPages=dEntries.reduce(function(n,it){return n+(it.changes?it.changes.length:0)},0);
       var fCount=items.length-dEntries.length;
       var sumParts=[];if(dEntries.length)sumParts.push(dEntries.length+"冊・"+dPages+"ページ");if(fCount)sumParts.push("その他"+fCount+"件");
-      detail+='<div style="font-weight:800;margin:12px 2px 6px">'+fmtJP(ds)+'（'+["日","月","火","水","木","金","土"][(parseDate(ds)||new Date()).getDay()]+'）'+(sumParts.length?'<span class="muted" style="font-weight:400;margin-left:8px">'+sumParts.join("・")+"</span>":"")+"</div>";
+      detail+='<div style="font-weight:800;font-size:16px;margin:12px 2px 6px">'+fmtJP(ds)+'（'+["日","月","火","水","木","金","土"][(parseDate(ds)||new Date()).getDay()]+'）'+(sumParts.length?'<span class="muted" style="font-weight:400;font-size:14px;margin-left:8px">'+sumParts.join("・")+"</span>":"")+"</div>";
       items.forEach(function(it){
         if(it.free){
           detail+='<div class="card"><div class="rowflex"><span class="tag">その他の記録</span><span class="grow" style="font-weight:700">'+esc(it.free.title)+'</span><button class="xbtn" data-delfree="'+it.freeId+'" aria-label="削除">✕</button></div>'+(it.free.memo?'<div class="memo-line small" style="margin-top:5px">'+esc(it.free.memo)+"</div>":"")+"</div>";
@@ -623,6 +631,18 @@ function renderRecord(){
   } else memoHtml='<p class="muted" style="margin:4px 0">この教材に苦手ページはまだありません。</p>';
   var todaysFree=S.freeLogs.filter(function(f){return f.date===recDate});
   var freeList=todaysFree.map(function(f){return '<div class="rowflex" style="margin:5px 0"><span class="grow"><b>'+esc(f.title)+"</b>"+(f.memo?' <span class="muted small">'+esc(f.memo)+"</span>":"")+'</span><button class="xbtn" data-delfree2="'+f.id+'">✕</button></div>'}).join("");
+  /* Recent records for the selected drill (newest first, up to 5 entries):
+     shows when this drill was last studied and which pages were done, so a
+     drill that has quietly stalled — or a weak page that was already
+     retried — is easy to spot. Rendered in the bottom-most card below. */
+  var recEntries=S.logs.map(function(l,i){return {l:l,i:i}}).filter(function(x){return x.l.drillId===d.id&&x.l.changes&&x.l.changes.length}).sort(function(a,b){return String(b.l.date).localeCompare(String(a.l.date))||b.i-a.i}).slice(0,5);
+  var recentHtml="";
+  if(recEntries.length){
+    recentHtml=recEntries.map(function(x){
+      var pages=x.l.changes.map(function(c){return (c.repeat?"🔁 ":"")+"p."+c.p}).join("、");
+      return '<div class="rowflex" style="margin:5px 0;align-items:flex-start"><span style="font-weight:700;flex:none">'+fmtMD(x.l.date)+'</span><span class="grow">'+pages+"</span></div>";
+    }).join("");
+  } else recentHtml='<p class="muted" style="margin:4px 0">この教材の記録はまだありません。</p>';
   el.innerHTML=
    (returnToProgress?'<button class="btn subbtn" id="backProg" style="margin-bottom:8px">← 進捗に戻る</button>':"")+
    '<h1>記録</h1>'+
@@ -632,11 +652,12 @@ function renderRecord(){
    '<div class="legend"><span><span class="sw b"></span>実施済み</span><span><span class="sw r"></span>苦手（未復習）</span><span><span class="sw b"></span>＋復＝苦手だったが復習済み</span><span><span class="sw o"></span>枠＝選んだ日に変更したページ</span><span>タップするたびに切り替わります</span></div>'+
    '<div style="height:1.45em" aria-hidden="true"></div>'+
    '<button class="btn" id="recSave" style="width:100%"'+(Object.keys(pending).length?"":' disabled')+'>'+(Object.keys(pending).length?("保存する（変更 "+Object.keys(pending).length+"件）"):"保存する")+'</button></div>'+
-   '<div class="card"><div style="font-weight:800;margin-bottom:2px">苦手メモ</div>'+memoHtml+"</div>"+
    '<div class="card"><div style="font-weight:800;margin-bottom:6px">その他の記録</div>'+
    '<label class="flabel" style="margin-top:0">項目名（なわとび、お教室の復習プリント など）</label><input type="text" id="freeTitle" placeholder="項目名">'+
    '<label class="flabel">メモ（任意）</label><input type="text" id="freeMemo" placeholder="メモ">'+
-   '<button class="btn" id="freeAdd" style="width:100%;margin-top:10px">この日に追加</button>'+freeList+"</div>";
+   '<button class="btn" id="freeAdd" style="width:100%;margin-top:10px">この日に追加</button>'+freeList+"</div>"+
+   '<div class="card"><div style="font-weight:800;margin-bottom:2px">苦手メモ</div>'+memoHtml+"</div>"+
+   '<div class="card"><div style="font-weight:800;margin-bottom:2px">直近の記録</div>'+recentHtml+"</div>";
   var bp=$("#backProg");if(bp)bp.onclick=function(){returnToProgress=false;switchTab("progress");setTimeout(function(){window.scrollTo(0,progressScrollY)},50)};
   $("#recDate").onchange=function(e){recDate=e.target.value;pending={};memoEditPage=null;renderRecord()};
   var ddOpen=false;var ddBtn=$("#ddBtn"),ddL=$("#ddList");
@@ -923,7 +944,7 @@ function renderSave(){
   '<div class="card"><div style="font-weight:800">文字の大きさ</div><p class="small muted">アプリ全体（タブバーも含む）の表示の大きさを切り替えます。設定はこの端末に保存され、次回開いたときもそのまま使えます。</p>'+
   '<div class="rowflex">'+fsBtn("std","標準")+fsBtn("big","大きめ")+fsBtn("xl","特大")+"</div></div>"+
   '<div class="card"><div style="font-weight:800">バックアップ</div><p class="small muted">データはこの端末のブラウザ内（localStorage）にのみ保存され、外部に送信されることはありません。週に1回ほど書き出しをして保管してください。</p>'+
-  '<p class="small muted">ファイルの版：2026-11-24 v17（復習リストの検索欄で文字がうまく打てない不具合を修正：入力のたびに検索欄ごと画面を作り直していたため日本語変換が中断されていたのを、検索欄はそのままに結果リストだけを更新する方式に変更）</p>'+
+  '<p class="small muted">ファイルの版：2026-11-24 v18（ログの日別見出しの日付と集計の文字を1段階大きく、進捗カードのドリル名も1段階大きく変更。ひとりでとっくん365日が01から順に並ばない不具合を修正：02が完了判定でシリーズ最後尾に送られていたため、このシリーズは番号順を優先。記録ページは「その他の記録」を保存ボタンのすぐ下へ移動し、一番下に「直近の記録」（直近5件）を追加）</p>'+
   '<button class="btn" id="svExport" style="width:100%">JSONを書き出す（ダウンロード）</button>'+
   '<button class="btn subbtn" id="svHtml" style="width:100%;margin-top:8px">単体HTMLを書き出す（muse-drill-tracker.html）</button>'+
   '<label class="flabel">バックアップを読み込む（旧GitHub版の形式にも対応）</label><input type="file" id="svImport" accept=".json,application/json"></div>'+
