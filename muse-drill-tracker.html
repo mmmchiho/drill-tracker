@@ -73,18 +73,19 @@ nav.tabs button.on{color:var(--teal)}
 .drill-name{font-weight:700;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .drill-name-lg{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* record grid */
-.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:8px}
-@media(min-width:560px){.grid{grid-template-columns:repeat(10,1fr)}}
-.cell{position:relative;border:1.5px solid var(--line);background:var(--card);border-radius:9px;padding:7px 0 6px;text-align:center;font-weight:700;font-size:13px;min-height:40px;color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-top:8px;width:100%}
+@media(min-width:560px){.grid{grid-template-columns:repeat(8,minmax(0,1fr))}}
+.cell{position:relative;border:1.5px solid var(--line);background:var(--card);border-radius:9px;padding:7px 0 6px;text-align:center;font-weight:700;font-size:13px;min-height:40px;color:var(--ink);min-width:0;width:100%}
 .cell.done{background:var(--blue);border-color:var(--blue);color:#fff}
 .cell.weak{background:var(--red);border-color:var(--red);color:#fff}
 .cell.reviewed{background:var(--blue);border-color:var(--blue);color:#fff}
 .cell .fuku{position:absolute;top:1px;right:2px;font-size:9px;background:#fff;color:var(--blue);border-radius:4px;padding:0 3px;line-height:1.5;font-weight:800;pointer-events:none}
-.cell.today{outline:3px solid #fff;outline-offset:-1px;box-shadow:inset 0 0 0 5px #1c2321,0 0 0 1.5px #1c2321}
-.cell.pending{box-shadow:inset 0 0 0 2px var(--ink)}
+.cell.today{box-shadow:inset 0 0 0 3px #fff}
+.cell.pending{box-shadow:inset 0 0 0 3px #fff}
+.cell.pending:not(.done):not(.weak):not(.reviewed){box-shadow:inset 0 0 0 2px var(--ink)}
 .legend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:11.5px;color:var(--sub);margin-top:8px}
 .sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:3px}
-.sw.b{background:var(--blue)}.sw.r{background:var(--red)}.sw.o{background:#fff;border:2px solid #1c2321;box-shadow:inset 0 0 0 2px #1c2321;width:13px;height:13px}
+.sw.b{background:var(--blue)}.sw.r{background:var(--red)}.sw.o{background:var(--blue);border:1px solid var(--line);box-shadow:inset 0 0 0 2px #fff;width:13px;height:13px}
 /* custom dropdown */
 .dd{position:relative}
 .dd-btn{width:100%;text-align:left;background:var(--input);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-height:52px;color:var(--ink)}
@@ -98,13 +99,13 @@ nav.tabs button.on{color:var(--teal)}
 .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
 .cal-head b{font-size:15px}
 .cal-nav{background:var(--card);border:1px solid var(--line);border-radius:9px;width:38px;font-size:16px}
-.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center}
-.cal .dow{font-size:11px;color:var(--sub);padding:3px 0}
-.cal .day{position:relative;border:none;background:none;border-radius:9px;padding:6px 0 10px;font-size:13px;color:var(--ink);min-height:38px}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;text-align:center;width:100%;max-width:100%}
+.cal .dow{font-size:11px;color:var(--sub);padding:3px 0;min-width:0}
+.cal .day{position:relative;border:none;background:none;border-radius:9px;padding:4px 0;font-size:13px;color:var(--ink);min-height:44px;min-width:0;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
 .cal .day.sel{background:var(--teal);color:#fff;font-weight:800}
 .cal .day.today{font-weight:800;color:var(--teal)}
 .cal .day.sel.today{color:#fff}
-.cal .dot{position:absolute;left:50%;transform:translateX(-50%);bottom:3px;width:7px;height:7px;border-radius:50%;background:var(--blue);display:block}
+.cal .dot{width:7px;height:7px;border-radius:50%;background:var(--blue);display:block;flex:none}
 .cal .day.sel .dot{background:#fff}
 /* review / good cards */
 .rv-name{font-size:14px;font-weight:700;line-height:1.35}
@@ -369,6 +370,7 @@ function importOld(data){
   function byNum(series,num){var f=null;S.drills.forEach(function(d){if(!f&&seriesOf(d.name)===series&&drillKey(d)[0]===num)f=d});return f}
   var d44=byNum("新版ばっちりくんドリル",44),d73=byNum("新版ばっちりくんドリル",73),d37=byNum("新版ばっちりくんドリル",37),d17=byNum("ひとりでとっくん単元別",17);
   [d44,d73,d37,d17].forEach(function(d){if(d)d.status="一時ストップ"});
+  if(d44)d44.memo="p21から方眼で広さを比べる問題で面積の考え方が要る";
   if(d73)d73.memo="くもんのてんびん論理パズルで具体物を使って学んでから再開する（年始あたりに再挑戦）。苦手ページ p20・21（期日12/6）・p26（期日12/13）は止めている間に過ぎても大丈夫で、再開時に期日を付け替える。";
   if(d37)d37.memo="前半：線対称（点線で折って裏側に写す）。p10あたり：反転した図を選ぶ問題。中盤（p11〜）：90度回転させて写す。先に新版36とピグマリオンで『まっすぐ正確に写す』力を固めてから再開する。";
   if(d17){var m17=pageMap(d17.id);[8,16,20].forEach(function(p){var st=m17[String(p)];if(st&&st.s==="weak")st.main=true})}
@@ -454,7 +456,8 @@ function renderLog(){
   for(var dd=1;dd<=days;dd++){
     var ds=y+"-"+String(mo).padStart(2,"0")+"-"+String(dd).padStart(2,"0");
     var cls="day"+(ds===todayStr()?" today":"")+(!logShowAll&&logSelDate===ds?" sel":"");
-    cells+='<button class="day '+cls+'" data-date="'+ds+'">'+dd+(byDate[ds]?'<span class="dot" style="position:absolute;left:50%;transform:translateX(-50%);bottom:3px;width:7px;height:7px;border-radius:50%;background:#2563eb;display:block"></span>':"")+"</button>";
+    var dotBg=byDate[ds]?((!logShowAll&&logSelDate===ds)?"#fff":"#2563eb"):"transparent";
+    cells+='<button class="day '+cls+'" data-date="'+ds+'"><span>'+dd+'</span><span class="dot" style="background:'+dotBg+'"></span></button>';
   }
   var dates=Object.keys(byDate).sort().reverse();
   var showDates=logShowAll?dates:(logSelDate?[logSelDate]:(dates.length?[dates[0]]:[]));
@@ -570,6 +573,12 @@ function renderRecord(){
       return txt;
     }).join(" ・ ")+"</p>";
   }
+  var stillHtml="";
+  if(weakSched.length){
+    stillHtml='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">'+weakSched.map(function(p){
+      return '<button data-stillweak="'+p+'" style="border:1.5px solid var(--red);color:var(--red);background:#fff;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700;min-height:32px;line-height:1.2">p'+p+' やった・まだ苦手</button>';
+    }).join("")+"</div>";
+  }
   // weak memos
   var weakPages=Object.keys(m).map(Number).sort(function(a,b){return a-b}).filter(function(p){return m[String(p)]&&(m[String(p)].s==="weak"||m[String(p)].s==="reviewed")});
   var memoHtml="";
@@ -589,7 +598,7 @@ function renderRecord(){
    '<h1>記録</h1>'+
    '<div class="card"><label class="flabel" style="margin-top:0">日付</label><input type="date" id="recDate" value="'+recDate+'">'+
    '<label class="flabel">教材</label><div class="dd"><button class="dd-btn" id="ddBtn"><span class="s1">'+esc(seriesOf(d.name))+'</span><span class="s2" style="color:#1c2321">'+esc(shortOf(d.name))+statusIcon(d)+'</span></button><div class="dd-list" id="ddList" style="display:none">'+ddList+"</div></div>"+
-   '<div class="grid">'+cells+'</div>'+schedHtml+
+   '<div class="grid">'+cells+'</div>'+schedHtml+stillHtml+
    '<div class="legend"><span><span class="sw b"></span>実施済み</span><span><span class="sw r"></span>苦手（未復習）</span><span><span class="sw b"></span>＋復＝苦手だったが復習済み</span><span><span class="sw o"></span>枠＝選んだ日に変更したページ</span><span>タップするたびに切り替わります</span></div>'+
    '<button class="btn" id="recSave" style="width:100%"'+(Object.keys(pending).length?"":' disabled')+'>'+(Object.keys(pending).length?("保存する（変更 "+Object.keys(pending).length+"件）"):"保存する")+'</button></div>'+
    '<div class="card"><div style="font-weight:800;margin-bottom:2px">苦手メモ</div>'+memoHtml+"</div>"+
@@ -629,6 +638,14 @@ function renderRecord(){
     S.logs.push({id:uid(),date:recDate,drillId:d.id,changes:changes,kind:"record"});
     pending={};save();render();toast("保存しました");
   };
+  el.querySelectorAll("[data-stillweak]").forEach(function(b){b.onclick=function(){
+    var p=+b.dataset.stillweak;var st=m[String(p)];if(!st||st.s!=="weak"){toast("対象のページが見つかりませんでした");return}
+    delete pending[String(p)];
+    var before=JSON.parse(JSON.stringify(st));
+    st.rc=(st.rc||0)+1;st.remind=addMonths(recDate,1);
+    S.logs.push({id:uid(),date:recDate,drillId:d.id,changes:[{p:p,before:before,after:JSON.parse(JSON.stringify(st)),repeat:true}],kind:"review"});
+    save();render();toast("p"+p+"を「まだ苦手」として記録しました（期日は約1ヶ月後）");
+  }});
   el.querySelectorAll("[data-memoedit]").forEach(function(b){b.onclick=function(){memoEditPage=+b.dataset.memoedit;renderRecord();var inp=$("#memoInput");if(inp){inp.focus()}}});
   var ms=$("#memoSave");if(ms)ms.onclick=function(){var st=S.pages[d.id][String(memoEditPage)];if(st)st.memo=$("#memoInput").value;memoEditPage=null;save();renderRecord();toast("メモを保存しました")};
   $("#freeAdd").onclick=function(){
@@ -702,7 +719,7 @@ function renderProgress(){
 }
 
 /* ============ REVIEW view ============ */
-var reviewSearch="";
+var reviewSearch="";var reviewDate=todayStr();
 function reviewItems(){
   var items=[];
   S.drills.forEach(function(d){var es=effStatus(d);if(d.status==="終了")return;var m=S.pages[d.id]||{};Object.keys(m).forEach(function(k){var st=m[k];if(st&&st.s==="weak")items.push({drill:d,page:+k,st:st,paused:es==="一時ストップ"&&!st.main,fromPaused:es==="一時ストップ"&&!!st.main})})});
@@ -733,7 +750,9 @@ function renderReview(){
   var t=todayStr();
   var due=main.filter(function(x){return x.st.remind&&x.st.remind<=t});
   var upcoming=main.filter(function(x){return !(x.st.remind&&x.st.remind<=t)});
+  if(!reviewDate)reviewDate=todayStr();
   var html='<h1>復習</h1>';
+  html+='<div class="card" style="padding:10px 12px"><label class="flabel" style="margin:0 0 4px">記録する日付（「復習した」「まだ苦手」に使う日付）</label><input type="date" id="rvRecDate" value="'+reviewDate+'"><p class="small muted" style="margin:6px 0 0">初期値は今日です。昨日やった分を付ける時は、ここを昨日に変えてからボタンを押してください。</p></div>';
   if(!items.length){
     html+='<div class="card"><div style="font-weight:800">復習待ちのページはありません</div><p class="small muted" style="margin:6px 0 0">記録で「苦手」にしたページが、約1ヶ月後にここへ出てきます。</p></div>';
   } else {
@@ -752,22 +771,25 @@ function renderReview(){
   html+='<div class="fab-col"><button class="fab" id="fabTop" title="先頭へ">↑</button><button class="fab" id="fabBottom" title="一番下へ">↓</button></div>';
   el.innerHTML=html;
   var si=$("#rvSearch");if(si)si.oninput=function(){reviewSearch=si.value;var pos=si.selectionStart;renderReview();var n=$("#rvSearch");if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}}};
+  var rd=$("#rvRecDate");if(rd)rd.onchange=function(){reviewDate=rd.value||todayStr()};
   el.querySelectorAll("[data-rvdone]").forEach(function(b){b.onclick=function(){
     var pp=b.dataset.rvdone.split("|");var d=drillById(pp[0]);var pg=+pp[1];if(!d)return;
     var mm=pageMap(d.id);var cur=mm[String(pg)];if(!cur||cur.s!=="weak")return;
+    var useDate=reviewDate||todayStr();
     var before=JSON.parse(JSON.stringify(cur));
     cur.rc=(cur.rc||0)+1;
-    cur.s="reviewed";cur.reviewedDate=todayStr();
-    S.logs.push({id:uid(),date:todayStr(),drillId:d.id,changes:[{p:pg,before:before,after:JSON.parse(JSON.stringify(cur)),repeat:true}],kind:"review"});
+    cur.s="reviewed";cur.reviewedDate=useDate;
+    S.logs.push({id:uid(),date:useDate,drillId:d.id,changes:[{p:pg,before:before,after:JSON.parse(JSON.stringify(cur)),repeat:true}],kind:"review"});
     save();render();toast("復習済みにしました");
   }});
   el.querySelectorAll("[data-rvstill]").forEach(function(b){b.onclick=function(){
     var pp=b.dataset.rvstill.split("|");var d=drillById(pp[0]);var pg=+pp[1];if(!d)return;
     var mm=pageMap(d.id);var cur=mm[String(pg)];if(!cur||cur.s!=="weak")return;
+    var useDate=reviewDate||todayStr();
     var before=JSON.parse(JSON.stringify(cur));
     cur.rc=(cur.rc||0)+1;
-    cur.remind=addMonths(todayStr(),1);
-    S.logs.push({id:uid(),date:todayStr(),drillId:d.id,changes:[{p:pg,before:before,after:JSON.parse(JSON.stringify(cur)),repeat:true}],kind:"review"});
+    cur.remind=addMonths(useDate,1);
+    S.logs.push({id:uid(),date:useDate,drillId:d.id,changes:[{p:pg,before:before,after:JSON.parse(JSON.stringify(cur)),repeat:true}],kind:"review"});
     save();render();toast("まだ苦手として記録しました（期日は約1ヶ月後）");
   }});
   el.querySelectorAll("[data-rvdate]").forEach(function(inp){inp.onchange=function(){
@@ -808,12 +830,11 @@ function renderGood(){
   act.forEach(function(g){
     var d=drillById(g.drillId);var overdue=g.remind&&g.remind<=t;var gSeries=d?seriesOf(d.name):"";
     html+='<div class="card"><div class="rowflex" style="align-items:flex-start"><div class="grow">'+(gSeries&&gSeries!=="その他"?'<div class="rv-series">'+esc(gSeries)+'</div>':"")+'<div class="rv-name">'+esc(d?shortOf(d.name):"教材指定なし")+' <span class="pg">'+g.pages.map(function(p){return "p."+p}).join(" ")+'</span></div></div><span class="tag kind" style="flex:none">'+esc(g.type||"その他")+'</span></div>'+
-    (g.memo?'<div class="memo-line small" style="margin-top:4px">'+esc(g.memo)+"</div>":"")+
-    '<div class="rowflex" style="margin-top:6px"><span class="small grow" style="'+(overdue?"color:var(--red);font-weight:700":"")+'">リマインド：'+fmtJP(g.remind)+'</span><label class="datebtn" title="日付を変更">📅<input type="date" data-gddate="'+g.id+'" value="'+(g.remind||"")+'"></label></div>'+
-    (g.created?'<div class="small muted" style="margin-top:2px">記録：'+fmtMDShort(g.created)+'</div>':"")+
+    (g.memo?'<div class="memo-line" style="margin-top:4px;font-size:14px">'+esc(g.memo)+"</div>":"")+
+    '<div class="rowflex" style="margin-top:6px"><span class="small grow" style="font-size:14px">記録日：'+(g.created?fmtMDShort(g.created):"―")+'　<span style="'+(overdue?"color:var(--red);font-weight:700":"")+'">リマインド：'+fmtJP(g.remind)+'</span></span><label class="datebtn" title="日付を変更">📅<input type="date" data-gddate="'+g.id+'" value="'+(g.remind||"")+'"></label></div>'+
     '<div class="rowflex" style="margin-top:8px"><button class="btn grow" data-gddone="'+g.id+'" style="background:#d97706">取り組んだ</button><button class="btn subbtn" data-gddel="'+g.id+'" style="color:var(--red)">削除</button></div></div>';
   });
-  if(done.length)html+='<details class="paused-sec"><summary>取り組み済み（'+done.length+'件）</summary>'+done.map(function(g){var d=drillById(g.drillId);var gSeries=d?seriesOf(d.name):"";return '<div class="card">'+(gSeries&&gSeries!=="その他"?'<div class="rv-series">'+esc(gSeries)+'</div>':"")+'<div class="rv-name" style="font-size:13.5px">'+esc(d?shortOf(d.name):"")+' <span class="pg" style="font-size:15px">'+g.pages.map(function(p){return "p."+p}).join(" ")+'</span></div>'+(g.memo?'<div class="memo-line small" style="margin-top:3px">'+esc(g.memo)+"</div>":"")+'<div class="small muted" style="margin-top:3px">'+(g.created?"記録："+fmtMDShort(g.created):"")+(g.doneDate?" ・ 取り組んだ："+fmtMDShort(g.doneDate):"")+'</div><div class="rowflex" style="margin-top:6px"><button class="btn subbtn" data-gdundo="'+g.id+'" style="min-height:32px;padding:3px 10px">取り消し</button><button class="btn subbtn" data-gddel="'+g.id+'" style="min-height:32px;padding:3px 10px;color:var(--red)">削除</button></div></div>'}).join("")+"</details>";
+  if(done.length)html+='<details class="paused-sec"><summary>取り組み済み（'+done.length+'件）</summary>'+done.map(function(g){var d=drillById(g.drillId);var gSeries=d?seriesOf(d.name):"";return '<div class="card">'+(gSeries&&gSeries!=="その他"?'<div class="rv-series">'+esc(gSeries)+'</div>':"")+'<div class="rv-name">'+esc(d?shortOf(d.name):"")+' <span class="pg">'+g.pages.map(function(p){return "p."+p}).join(" ")+'</span></div>'+(g.memo?'<div class="memo-line" style="margin-top:3px;font-size:14px">'+esc(g.memo)+"</div>":"")+'<div class="rowflex" style="margin-top:6px"><span class="small grow" style="font-size:14px">記録日：'+(g.created?fmtMDShort(g.created):"―")+'　リマインド：'+fmtJP(g.remind)+(g.doneDate?"　取り組んだ："+fmtMDShort(g.doneDate):"")+'</span></div><div class="rowflex" style="margin-top:6px"><button class="btn subbtn" data-gdundo="'+g.id+'" style="min-height:32px;padding:3px 10px">取り消し</button><button class="btn subbtn" data-gddel="'+g.id+'" style="min-height:32px;padding:3px 10px;color:var(--red)">削除</button></div></div>'}).join("")+"</details>";
   el.innerHTML=html;
   var gdBtn=$("#gdDdBtn"),gdL=$("#gdDdList");
   if(gdBtn&&gdL){
@@ -843,7 +864,7 @@ function renderSave(){
   '<div class="card"><div style="font-weight:800">文字の大きさ</div><p class="small muted">アプリ全体（タブバーも含む）の表示の大きさを切り替えます。設定はこの端末に保存され、次回開いたときもそのまま使えます。</p>'+
   '<div class="rowflex">'+fsBtn("std","標準")+fsBtn("big","大きめ")+fsBtn("xl","特大")+"</div></div>"+
   '<div class="card"><div style="font-weight:800">バックアップ</div><p class="small muted">データはこの端末のブラウザ内（localStorage）にのみ保存され、外部に送信されることはありません。週に1回ほど書き出しをして保管してください。</p>'+
-  '<p class="small muted">ファイルの版：2026-11-24 v12（記録の復習予定は期限切れを赤字のみで表示／変更ページの枠を白＋濃色の二重枠に変更／シリーズ名の行を全箇所で約2px拡大／復習カードの「復習予定」「初回実施日」を約2px拡大）</p>'+
+  '<p class="small muted">ファイルの版：2026-11-24 v13（変更ページの枠を内側の白枠のみに変更／良問メモを14pxにし記録日とリマインドを同じ行に／新版44の教材メモ初期値を追加／ログのカレンダーを試作と同じ7列固定（minmax）にし記録グリッドを試作と同じ5列（広い画面8列）に変更／記録に「やった・まだ苦手」ボタンを追加／復習タブで記録する日付を選べるように変更）</p>'+
   '<button class="btn" id="svExport" style="width:100%">JSONを書き出す（ダウンロード）</button>'+
   '<button class="btn subbtn" id="svHtml" style="width:100%;margin-top:8px">単体HTMLを書き出す（muse-drill-tracker.html）</button>'+
   '<label class="flabel">バックアップを読み込む（旧GitHub版の形式にも対応）</label><input type="file" id="svImport" accept=".json,application/json"></div>'+
