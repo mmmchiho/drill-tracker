@@ -236,7 +236,7 @@ function normName(name){return String(name||"").replace(/[\s　]/g,"").replace(/
 var S=null;
 function blankState(){return {version:2,drills:[],pages:{},logs:[],freeLogs:[],goods:[]}}
 function load(){
-try{var raw=localStorage.getItem(LS_KEY);if(raw){S=JSON.parse(raw);if(S&&S.version===2){normalizeStateDates();if(ensureNewDrills())save();return}}}catch(e){}
+try{var raw=localStorage.getItem(LS_KEY);if(raw){S=JSON.parse(raw);if(S&&S.version===2){normalizeStateDates();var dirty=repairWeakFromLogs();if(ensureNewDrills())dirty=true;if(dirty)save();return}}}catch(e){}
 S=blankState();
 }
 /* Drills added after the user's data already exists on her device: a new
@@ -272,6 +272,41 @@ function normalizeStateDates(){
   (S.freeLogs||[]).forEach(function(f){f.date=normDay(f.date)});
   (S.goods||[]).forEach(function(g){if(g.created)g.created=normDay(g.created);if(g.remind)g.remind=normDay(g.remind);if(g.doneDate)g.doneDate=normDay(g.doneDate)});
   Object.keys(S.pages||{}).forEach(function(id){var m=S.pages[id];Object.keys(m).forEach(function(k){var st=m[k];if(!st)return;["first","weakDate","remind","reviewedDate"].forEach(function(f){if(st[f])st[f]=normDay(st[f])})})});
+}
+/* One-time repair (v20) for page states produced by the old import, which
+   read a completed weak entry as reviewed only for the pages listed in
+   donePages — in the old tracker completion lived in the study logs, so
+   finished pages came back as still weak. Rule: a weak page becomes
+   reviewed when a study log for it exists after its weakDate whose result
+   was not "weak", and no later log re-registered it as weak; the review
+   date is that log's date. Native records are safe: reaching reviewed by
+   tapping already leaves the page reviewed, and "まだ苦手" logs end in a
+   weak state, so they never count as review evidence — and when one is
+   the latest word on a page it blocks the repair. Idempotent: repaired
+   pages are no longer weak, and S.repairV20 stops the scan re-running. */
+function repairWeakFromLogs(){
+  if(!S||S.repairV20)return false;
+  (S.drills||[]).forEach(function(d){
+    var m=S.pages[d.id];if(!m)return;
+    Object.keys(m).forEach(function(k){
+      var st=m[k];if(!st||st.s!=="weak"||!st.weakDate)return;
+      var p=+k;var evIdx=-1,evDate="",weakIdx=-1;
+      (S.logs||[]).forEach(function(l,li){
+        if(l.drillId!==d.id||!l.changes)return;
+        if(!l.date||l.date<=st.weakDate)return;
+        l.changes.forEach(function(c){
+          if(c.p!==p||!c.after)return;
+          if(c.after.s==="weak"){if(li>weakIdx)weakIdx=li}
+          else if(li>evIdx){evIdx=li;evDate=l.date}
+        });
+      });
+      if(evIdx>=0&&evIdx>weakIdx){
+        st.s="reviewed";st.reviewedDate=evDate;st.rc=(st.rc||0)+1;
+      }
+    });
+  });
+  S.repairV20=true;
+  return true;
 }
 function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(S))}catch(e){toast("保存できませんでした（容量不足の可能性）")}}
 function drillById(id){for(var i=0;i<S.drills.length;i++)if(S.drills[i].id===id)return S.drills[i];return null}
@@ -340,6 +375,16 @@ function timingToRemind(timing,createdDate,memo){
   if(/年長春/.test(t))return "2027-03-01";
   return addDays(base,90);
 }
+/* Old-format weak entries: done===true means EVERY page of that entry was
+   reviewed. Completion was recorded in the study logs (doneDate is the day
+   the last page was logged), so donePages often lists only some of the
+   entry's pages and must not be treated as the full set. Only when done is
+   not true does donePages decide, page by page (partial completion). */
+function weakEntryPageDone(w,page){
+  if(w.done===true)return true;
+  if(Array.isArray(w.donePages))return w.donePages.map(String).indexOf(String(page))>=0;
+  return false;
+}
 function importOld(data){
   S=blankState();
   (data.drills||[]).forEach(function(name){getOrCreateDrill(name)});
@@ -359,7 +404,8 @@ function importOld(data){
     });
     if(changes.length)S.logs.push({id:uid()+Math.random(),date:l.date,drillId:d.id,changes:changes,kind:"import"});
   });
-  // weaks: latest entry per page decides current state (done / donePages = reviewed)
+  // weaks: latest entry per page decides current state; whether that entry
+  // counts as reviewed for the page is weakEntryPageDone() (done = all pages)
   var perPage={};
   (data.weaks||[]).forEach(function(w){
     var d=getOrCreateDrill(w.drill);
@@ -370,11 +416,9 @@ function importOld(data){
   Object.keys(perPage).forEach(function(key){
     var arr=perPage[key].sort(function(a,b){return String(a.w.date).localeCompare(String(b.w.date))});
     var last=arr[arr.length-1];var w=last.w;
-    var isDone=false;
-    if(Array.isArray(w.donePages))isDone=w.donePages.map(String).indexOf(String(last.page))>=0;
-    else if(w.done===true)isDone=true;
+    var isDone=weakEntryPageDone(w,last.page);
     var memo="";arr.forEach(function(e){if(e.w.memo)memo=e.w.memo});
-    var rcN=arr.reduce(function(n,e){var w2=e.w;var dn=Array.isArray(w2.donePages)?w2.donePages.map(String).indexOf(String(e.page))>=0:(w2.done===true);return n+(dn?1:0)},0);
+    var rcN=arr.reduce(function(n,e){return n+(weakEntryPageDone(e.w,e.page)?1:0)},0);
     var d=drillById(last.drillId);var m=pageMap(d.id);var cur=m[String(last.page)];
     var first=(cur&&cur.first)||jstDate(w.date);
     if(isDone)m[String(last.page)]={s:"reviewed",first:first,weakDate:jstDate(w.date),remind:jstDate(w.remindDate)||addMonths(jstDate(w.date),1),memo:memo,reviewedDate:jstDate(w.doneDate)||jstDate(w.date),rc:rcN};
@@ -407,11 +451,15 @@ function importOld(data){
   S.drills.forEach(function(d){if(d.total==null)return;var mm=S.pages[d.id]||{};var mx=0;Object.keys(mm).forEach(function(k){var n=+k;if(n>mx)mx=n});if(mx>d.total)d.total=mx});
   // drills added after the old format was frozen (e.g. 単元別83) ride along
   ensureNewDrills();
+  // This import already applies the corrected done semantics, so the v20
+  // one-time repair for previously imported data must not run on it.
+  S.repairV20=true;
   save();
 }
 function importOwn(data){
   S={version:2,drills:data.drills||[],pages:data.pages||{},logs:data.logs||[],freeLogs:data.freeLogs||[],goods:data.goods||[]};
   normalizeStateDates();
+  repairWeakFromLogs();
   ensureNewDrills();
   save();
 }
@@ -1015,7 +1063,7 @@ function renderSave(){
   '<div class="card"><div style="font-weight:800">文字の大きさ</div><p class="small muted">アプリ全体（タブバーも含む）の表示の大きさを切り替えます。設定はこの端末に保存され、次回開いたときもそのまま使えます。</p>'+
   '<div class="rowflex">'+fsBtn("std","標準")+fsBtn("big","大きめ")+fsBtn("xl","特大")+"</div></div>"+
   '<div class="card"><div style="font-weight:800">バックアップ</div><p class="small muted">データはこの端末のブラウザ内（localStorage）にのみ保存され、外部に送信されることはありません。週に1回ほど書き出しをして保管してください。</p>'+
-  '<p class="small muted">ファイルの版：2026-11-26 v19（ログの日別表示で、同じ日・同じ教材の記録が複数のカードに分かれる不具合を修正：記録方法が違っても（記録タブ／復習の「復習した」／「やった・まだ苦手」など）「日付×教材」で1枚のカードにまとめ、全ページをページ番号順に横並び表示。日の集計の「◯冊」は教材数で数え直し。✕の取り消しはまとめたカード内の全ページから選べる。記録ページの「直近の記録」も同日の分を1行にまとめ、日付を固定幅の列にしてページの開始位置が縦にそろうようにした。進捗の並びは全シリーズで番号順に統一し、完了した教材も最後尾に送らず番号の位置に置く（記録の教材プルダウンも同じ）。新教材「ひとりでとっくん単元別 83 3×3方眼上の記憶」（30ページ）を追加：既存データの読み込み時に未登録なら自動で1冊だけ追加され、旧形式バックアップの取り込み時にも含まれる。保存形式は変更なし）</p>'+
+  '<p class="small muted">ファイルの版：2026-11-26 v20（復習リストに完了済みのページが残る不具合を修正：旧形式バックアップの取り込みで、苦手エントリの done（完了）は「そのエントリの全ページが復習済み」の意味として解釈するよう変更（従来は donePages に載ったページだけを復習済みとみなしていたため、完了済みのページが未復習として復活していた）。取り込み済みの既存データも、読み込み時に一度だけ自動修復する：苦手登録より後の学習ログがあり、その後苦手として再登録されていないページを、復習済み（復習日＝そのログの日付）に直す。単体版で記録したデータの状態は変わらない。あわせて v19 の内容：ログの日別表示で、同じ日・同じ教材の記録が複数のカードに分かれる不具合を修正：記録方法が違っても（記録タブ／復習の「復習した」／「やった・まだ苦手」など）「日付×教材」で1枚のカードにまとめ、全ページをページ番号順に横並び表示。日の集計の「◯冊」は教材数で数え直し。✕の取り消しはまとめたカード内の全ページから選べる。記録ページの「直近の記録」も同日の分を1行にまとめ、日付を固定幅の列にしてページの開始位置が縦にそろうようにした。進捗の並びは全シリーズで番号順に統一し、完了した教材も最後尾に送らず番号の位置に置く（記録の教材プルダウンも同じ）。新教材「ひとりでとっくん単元別 83 3×3方眼上の記憶」（30ページ）を追加：既存データの読み込み時に未登録なら自動で1冊だけ追加され、旧形式バックアップの取り込み時にも含まれる。保存形式は変更なし）</p>'+
   '<button class="btn" id="svExport" style="width:100%">JSONを書き出す（ダウンロード）</button>'+
   '<button class="btn subbtn" id="svHtml" style="width:100%;margin-top:8px">単体HTMLを書き出す（muse-drill-tracker.html）</button>'+
   '<label class="flabel">バックアップを読み込む（旧GitHub版の形式にも対応）</label><input type="file" id="svImport" accept=".json,application/json"></div>'+
