@@ -236,8 +236,31 @@ function normName(name){return String(name||"").replace(/[\s　]/g,"").replace(/
 var S=null;
 function blankState(){return {version:2,drills:[],pages:{},logs:[],freeLogs:[],goods:[]}}
 function load(){
-try{var raw=localStorage.getItem(LS_KEY);if(raw){S=JSON.parse(raw);if(S&&S.version===2){normalizeStateDates();return}}}catch(e){}
+try{var raw=localStorage.getItem(LS_KEY);if(raw){S=JSON.parse(raw);if(S&&S.version===2){normalizeStateDates();if(ensureNewDrills())save();return}}}catch(e){}
 S=blankState();
+}
+/* Drills added after the user's data already exists on her device: a new
+   drill cannot ride in with an import (her live data is in localStorage,
+   not in a file), so on every load / import it is appended once if — and
+   only if — no drill with that name/number is present yet. Re-running is
+   a no-op, so it never duplicates. */
+var ADDED_DRILLS=[{name:"ひとりでとっくん単元別　83 3×3方眼上の記憶",total:30}];
+function ensureNewDrills(){
+  var added=false;
+  ADDED_DRILLS.forEach(function(spec){
+    if(!findDrillByName(spec.name)){
+      /* The new drill must start 未着手 with its own page map: if the
+         generated id ever collided with an existing drill's id, the two
+         drills would silently share pages and logs. Re-roll with a suffix
+         until the id is unique; skip adding rather than corrupt data. */
+      var id=uid();var guard=0;
+      while(drillById(id)&&guard<20){guard++;id=uid()+"z"+guard}
+      if(drillById(id))return;
+      S.drills.push({id:id,name:spec.name,total:spec.total,memo:"",status:"進行中"});
+      added=true;
+    }
+  });
+  return added;
 }
 /* Repair dates that arrived in ISO ("2026-11-18T00:40:02.743Z") or slash
    ("2026/11/18") form: every stored date becomes canonical YYYY-MM-DD so the
@@ -291,17 +314,14 @@ function drillIdx(d){for(var i=0;i<S.drills.length;i++)if(S.drills[i].id===d.id)
 /* Pure number order — used by every drill picker (record / good). A complete
    drill keeps its numeric position; ☑️ is only a mark, never a sort key. */
 function cmpByNumber(a,b){var ka=drillKey(a),kb=drillKey(b);if(ka[0]!==kb[0])return ka[0]-kb[0];if(ka[1]!==kb[1])return ka[1]-kb[1];return drillIdx(a)-drillIdx(b)}
-/* Progress only: complete drills sink to the end of their series (number
-   order among themselves); everything else interleaves purely by number. */
-function cmpDrills(a,b){
-  /* 365日 exception: its six volumes form one sequence (01基礎1-A → 06基礎3-B)
-     worked through in volume order, so they always list 01→06. Sinking a
-     completed volume to the end of the series (the rule below) put 02 —
-     auto-judged 完了 at 31/31 with no weak pages left — after 06, which read
-     as the set being out of order. Other series keep the sink rule. */
-  if(seriesOf(a.name)==="ひとりでとっくん365日"&&seriesOf(b.name)==="ひとりでとっくん365日")return cmpByNumber(a,b);
-  var ca=effStatus(a)==="完了"?1:0,cb=effStatus(b)==="完了"?1:0;if(ca!==cb)return ca-cb;return cmpByNumber(a,b);
-}
+/* Progress order: pure number order in every series. Completed drills keep
+   their numeric position (☑️ is only a mark, never a sort key) — the old
+   "completed drills sink to the end of their series" rule was dropped for
+   all series (it began as a 365日-only exception in v18 after a completed
+   volume landed after 06; the user then asked for number order everywhere).
+   The record / good pickers already sort with cmpByNumber, so all three
+   lists agree. 一時ストップ drills are not reordered either. */
+function cmpDrills(a,b){return cmpByNumber(a,b)}
 function statusIcon(d){var es=effStatus(d);return es==="完了"?" ☑️":(es==="一時ストップ"?" 🚫":"")}
 </script>
 <script>
@@ -385,11 +405,14 @@ function importOld(data){
   if(d17){var m17=pageMap(d17.id);[8,16,20].forEach(function(p){var st=m17[String(p)];if(st&&st.s==="weak")st.main=true})}
   // provisional totals grow to the largest recorded page (prototype importer rule)
   S.drills.forEach(function(d){if(d.total==null)return;var mm=S.pages[d.id]||{};var mx=0;Object.keys(mm).forEach(function(k){var n=+k;if(n>mx)mx=n});if(mx>d.total)d.total=mx});
+  // drills added after the old format was frozen (e.g. 単元別83) ride along
+  ensureNewDrills();
   save();
 }
 function importOwn(data){
   S={version:2,drills:data.drills||[],pages:data.pages||{},logs:data.logs||[],freeLogs:data.freeLogs||[],goods:data.goods||[]};
   normalizeStateDates();
+  ensureNewDrills();
   save();
 }
 function exportData(){
@@ -508,22 +531,41 @@ function renderLog(){
     showDates.forEach(function(ds){
       var items=(byDate[ds]||[]).slice();
       if(!items.length)return;
-      var dEntries=items.filter(function(it){return !it.free});
-      var dPages=dEntries.reduce(function(n,it){return n+(it.changes?it.changes.length:0)},0);
-      var fCount=items.length-dEntries.length;
-      var sumParts=[];if(dEntries.length)sumParts.push(dEntries.length+"冊・"+dPages+"ページ");if(fCount)sumParts.push("その他"+fCount+"件");
-      detail+='<div style="font-weight:800;font-size:16px;margin:12px 2px 6px">'+fmtJP(ds)+'（'+["日","月","火","水","木","金","土"][(parseDate(ds)||new Date()).getDay()]+'）'+(sumParts.length?'<span class="muted" style="font-weight:400;font-size:14px;margin-left:8px">'+sumParts.join("・")+"</span>":"")+"</div>";
+      /* Group the day's drill logs by drill (date × drill): one card per
+         drill, however the pages were recorded. A page first done in the
+         record tab and later retried from the review tab (or "やった・まだ
+         苦手") is stored as separate log entries, but on screen they belong
+         on a single card with the pages side by side. Display-only grouping
+         — the stored log format is unchanged. Free logs stay as they are. */
+      var slots=[];var groupByDrill={};
       items.forEach(function(it){
-        if(it.free){
+        if(it.free){slots.push({freeItem:it});return}
+        var g=groupByDrill[it.drillId];
+        if(!g){g={drillId:it.drillId,logIds:[],byPage:{}};groupByDrill[it.drillId]=g;slots.push({group:g})}
+        g.logIds.push(it.id);
+        (it.changes||[]).forEach(function(c){
+          // Same page twice in one day: the later entry decides how the
+          // pill looks; undo still reverts every entry (see doUndo).
+          g.byPage[c.p]={p:c.p,repeat:!!c.repeat};
+        });
+      });
+      var drillCount=Object.keys(groupByDrill).length;
+      var pageKeys={};Object.keys(groupByDrill).forEach(function(id){Object.keys(groupByDrill[id].byPage).forEach(function(p){pageKeys[id+"|"+p]=true})});
+      var dPages=Object.keys(pageKeys).length;
+      var fCount=items.filter(function(it){return !!it.free}).length;
+      var sumParts=[];if(drillCount)sumParts.push(drillCount+"冊・"+dPages+"ページ");if(fCount)sumParts.push("その他"+fCount+"件");
+      detail+='<div style="font-weight:800;font-size:16px;margin:12px 2px 6px">'+fmtJP(ds)+'（'+["日","月","火","水","木","金","土"][(parseDate(ds)||new Date()).getDay()]+'）'+(sumParts.length?'<span class="muted" style="font-weight:400;font-size:14px;margin-left:8px">'+sumParts.join("・")+"</span>":"")+"</div>";
+      slots.forEach(function(slot){
+        if(slot.freeItem){
+          var it=slot.freeItem;
           detail+='<div class="card"><div class="rowflex"><span class="tag">その他の記録</span><span class="grow" style="font-weight:700">'+esc(it.free.title)+'</span><button class="xbtn" data-delfree="'+it.freeId+'" aria-label="削除">✕</button></div>'+(it.free.memo?'<div class="memo-line small" style="margin-top:5px">'+esc(it.free.memo)+"</div>":"")+"</div>";
           return;
         }
-        var d=drillById(it.drillId);var name=d?d.name:"(削除された教材)";
-        var normal=it.changes.filter(function(c){return !c.repeat});
-        var reps=it.changes.filter(function(c){return c.repeat});
-        var pills=normal.map(function(c){return '<span class="pill">p.'+c.p+"</span>"}).join("");
-        var repPills=reps.map(function(c){return '<span class="pill rev-pill">🔁 p.'+c.p+"</span>"}).join("");
-        detail+='<div class="card"><div class="log-series">'+esc(seriesOf(name))+'</div><div class="drill-name-lg" title="'+esc(name)+'" style="margin-bottom:6px">'+esc(shortOf(name))+'</div><div class="rowflex" style="align-items:flex-start"><div class="grow">'+pills+repPills+'</div><button class="xbtn" data-undo="'+it.id+'" aria-label="記録を取り消す">✕</button></div></div>';
+        var g=slot.group;
+        var d=drillById(g.drillId);var name=d?d.name:"(削除された教材)";
+        var merged=Object.keys(g.byPage).map(function(k){return g.byPage[k]}).sort(function(a,b){return a.p-b.p});
+        var pills=merged.map(function(c){return c.repeat?'<span class="pill rev-pill">🔁 p.'+c.p+"</span>":'<span class="pill">p.'+c.p+"</span>"}).join("");
+        detail+='<div class="card"><div class="log-series">'+esc(seriesOf(name))+'</div><div class="drill-name-lg" title="'+esc(name)+'" style="margin-bottom:6px">'+esc(shortOf(name))+'</div><div class="rowflex" style="align-items:flex-start"><div class="grow">'+pills+'</div><button class="xbtn" data-undo="'+g.logIds.join(",")+'" aria-label="記録を取り消す">✕</button></div></div>';
       });
     });
   }
@@ -541,11 +583,19 @@ function openConfirm(msg,onYes){
   openModal('<p style="font-weight:700">'+esc(msg)+'</p><div class="rowflex" style="margin-top:14px"><button class="btn grow" id="cfYes">実行する</button><button class="btn subbtn grow" id="cfNo">やめる</button></div>');
   $("#cfNo").onclick=closeModal;$("#cfYes").onclick=function(){closeModal();onYes()};
 }
-function openUndoPicker(logId){
-  var entry=null;S.logs.forEach(function(l){if(l.id===logId)entry=l});if(!entry)return;
-  var d=drillById(entry.drillId);var name=d?shortOf(d.name):"";
-  var html='<p style="font-weight:700;margin-top:0">'+esc(name)+'</p><p class="small muted">'+fmtJP(entry.date)+' の記録から、取り消すページを選んでください。</p>';
-  entry.changes.forEach(function(c){html+='<label class="chk"><input type="checkbox" class="undo-chk" value="'+c.p+'" checked> p.'+c.p+(c.repeat?"（🔁復習）":"")+"</label>"});
+function openUndoPicker(logIdsCsv){
+  /* A grouped log card can span several stored log entries (same day, same
+     drill); the picker lists every page of the group once, in page order,
+     and undo reverts each page in whichever entry recorded it. */
+  var logIds=String(logIdsCsv||"").split(",").filter(function(x){return x});
+  var entries=S.logs.filter(function(l){return logIds.indexOf(l.id)>=0});
+  if(!entries.length)return;
+  var first=entries[0];
+  var d=drillById(first.drillId);var name=d?shortOf(d.name):"";
+  var byPage={};entries.forEach(function(e){(e.changes||[]).forEach(function(c){byPage[c.p]={p:c.p,repeat:!!c.repeat}})});
+  var merged=Object.keys(byPage).map(function(k){return byPage[k]}).sort(function(a,b){return a.p-b.p});
+  var html='<p style="font-weight:700;margin-top:0">'+esc(name)+'</p><p class="small muted">'+fmtJP(first.date)+' の記録から、取り消すページを選んでください。</p>';
+  merged.forEach(function(c){html+='<label class="chk"><input type="checkbox" class="undo-chk" value="'+c.p+'" checked> p.'+c.p+(c.repeat?"（🔁復習）":"")+"</label>"});
   html+='<div class="rowflex" style="margin-top:14px"><button class="btn grow" id="undoGo">選んだページを取り消す</button><button class="btn subbtn" id="undoCancel">やめる</button></div>';
   openModal(html);
   $("#undoCancel").onclick=closeModal;
@@ -554,17 +604,23 @@ function openUndoPicker(logId){
     if(!sel.length){toast("ページを選んでください");return}
     var label=sel.map(function(p){return "p."+p}).join("、");
     closeModal();
-    openConfirm(label+"の記録を取り消しますか？",function(){doUndo(entry.id,sel)});
+    openConfirm(label+"の記録を取り消しますか？",function(){doUndo(logIds,sel)});
   };
 }
-function doUndo(logId,pages){
-  var idx=-1;S.logs.forEach(function(l,i){if(l.id===logId)idx=i});if(idx<0)return;
-  var entry=S.logs[idx];var m=pageMap(entry.drillId);
-  entry.changes.filter(function(c){return pages.indexOf(c.p)>=0}).forEach(function(c){
-    if(c.before)m[String(c.p)]=c.before;else delete m[String(c.p)];
-  });
-  entry.changes=entry.changes.filter(function(c){return pages.indexOf(c.p)<0});
-  if(!entry.changes.length)S.logs.splice(idx,1);
+function doUndo(logIds,pages){
+  var idSet={};(Array.isArray(logIds)?logIds:[logIds]).forEach(function(id){idSet[id]=true});
+  /* Revert newest entry first: if the same page was recorded twice that
+     day, applying each entry's "before" snapshot in reverse order lands
+     on the state from before the day's first recording of that page. */
+  for(var i=S.logs.length-1;i>=0;i--){
+    var entry=S.logs[i];if(!idSet[entry.id])continue;
+    var m=pageMap(entry.drillId);
+    entry.changes.filter(function(c){return pages.indexOf(c.p)>=0}).forEach(function(c){
+      if(c.before)m[String(c.p)]=c.before;else delete m[String(c.p)];
+    });
+    entry.changes=entry.changes.filter(function(c){return pages.indexOf(c.p)<0});
+  }
+  S.logs=S.logs.filter(function(l){return !(idSet[l.id]&&(!l.changes||!l.changes.length))});
   save();render();toast("取り消しました");
 }
 </script>
@@ -635,12 +691,27 @@ function renderRecord(){
      shows when this drill was last studied and which pages were done, so a
      drill that has quietly stalled — or a weak page that was already
      retried — is easy to spot. Rendered in the bottom-most card below. */
-  var recEntries=S.logs.map(function(l,i){return {l:l,i:i}}).filter(function(x){return x.l.drillId===d.id&&x.l.changes&&x.l.changes.length}).sort(function(a,b){return String(b.l.date).localeCompare(String(a.l.date))||b.i-a.i}).slice(0,5);
+  /* Group by date: several log entries for the same day (e.g. one from the
+     record tab, one from a review action) show as a single row with all of
+     that day's pages side by side, in page order — same grouping as the
+     log tab. Up to 5 days are shown. */
+  /* Rows are newest day first; within one day entries are applied oldest
+     first so the latest recording of a page decides its 🔁 mark — the same
+     rule the log tab's grouping uses. */
+  var recSorted=S.logs.map(function(l,i){return {l:l,i:i}}).filter(function(x){return x.l.drillId===d.id&&x.l.changes&&x.l.changes.length}).sort(function(a,b){return String(b.l.date).localeCompare(String(a.l.date))||a.i-b.i});
+  var recGroups=[];var recByDate={};
+  recSorted.forEach(function(x){
+    var g=recByDate[x.l.date];
+    if(!g){g={date:x.l.date,byPage:{}};recByDate[x.l.date]=g;recGroups.push(g)}
+    x.l.changes.forEach(function(c){g.byPage[c.p]={p:c.p,repeat:!!c.repeat}});
+  });
+  recGroups=recGroups.slice(0,5);
   var recentHtml="";
-  if(recEntries.length){
-    recentHtml=recEntries.map(function(x){
-      var pages=x.l.changes.map(function(c){return (c.repeat?"🔁 ":"")+"p."+c.p}).join("、");
-      return '<div class="rowflex" style="margin:5px 0;align-items:flex-start"><span style="font-weight:700;flex:none">'+fmtMD(x.l.date)+'</span><span class="grow">'+pages+"</span></div>";
+  if(recGroups.length){
+    recentHtml=recGroups.map(function(g){
+      var merged=Object.keys(g.byPage).map(function(k){return g.byPage[k]}).sort(function(a,b){return a.p-b.p});
+      var pages=merged.map(function(c){return (c.repeat?"🔁 ":"")+"p."+c.p}).join("、");
+      return '<div class="rowflex" style="margin:5px 0;align-items:flex-start"><span style="font-weight:700;flex:none;width:96px;font-variant-numeric:tabular-nums">'+fmtMD(g.date)+'</span><span class="grow">'+pages+"</span></div>";
     }).join("");
   } else recentHtml='<p class="muted" style="margin:4px 0">この教材の記録はまだありません。</p>';
   el.innerHTML=
@@ -944,7 +1015,7 @@ function renderSave(){
   '<div class="card"><div style="font-weight:800">文字の大きさ</div><p class="small muted">アプリ全体（タブバーも含む）の表示の大きさを切り替えます。設定はこの端末に保存され、次回開いたときもそのまま使えます。</p>'+
   '<div class="rowflex">'+fsBtn("std","標準")+fsBtn("big","大きめ")+fsBtn("xl","特大")+"</div></div>"+
   '<div class="card"><div style="font-weight:800">バックアップ</div><p class="small muted">データはこの端末のブラウザ内（localStorage）にのみ保存され、外部に送信されることはありません。週に1回ほど書き出しをして保管してください。</p>'+
-  '<p class="small muted">ファイルの版：2026-11-24 v18（ログの日別見出しの日付と集計の文字を1段階大きく、進捗カードのドリル名も1段階大きく変更。ひとりでとっくん365日が01から順に並ばない不具合を修正：02が完了判定でシリーズ最後尾に送られていたため、このシリーズは番号順を優先。記録ページは「その他の記録」を保存ボタンのすぐ下へ移動し、一番下に「直近の記録」（直近5件）を追加）</p>'+
+  '<p class="small muted">ファイルの版：2026-11-26 v19（ログの日別表示で、同じ日・同じ教材の記録が複数のカードに分かれる不具合を修正：記録方法が違っても（記録タブ／復習の「復習した」／「やった・まだ苦手」など）「日付×教材」で1枚のカードにまとめ、全ページをページ番号順に横並び表示。日の集計の「◯冊」は教材数で数え直し。✕の取り消しはまとめたカード内の全ページから選べる。記録ページの「直近の記録」も同日の分を1行にまとめ、日付を固定幅の列にしてページの開始位置が縦にそろうようにした。進捗の並びは全シリーズで番号順に統一し、完了した教材も最後尾に送らず番号の位置に置く（記録の教材プルダウンも同じ）。新教材「ひとりでとっくん単元別 83 3×3方眼上の記憶」（30ページ）を追加：既存データの読み込み時に未登録なら自動で1冊だけ追加され、旧形式バックアップの取り込み時にも含まれる。保存形式は変更なし）</p>'+
   '<button class="btn" id="svExport" style="width:100%">JSONを書き出す（ダウンロード）</button>'+
   '<button class="btn subbtn" id="svHtml" style="width:100%;margin-top:8px">単体HTMLを書き出す（muse-drill-tracker.html）</button>'+
   '<label class="flabel">バックアップを読み込む（旧GitHub版の形式にも対応）</label><input type="file" id="svImport" accept=".json,application/json"></div>'+
