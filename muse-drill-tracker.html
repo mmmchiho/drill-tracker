@@ -244,7 +244,7 @@ S=blankState();
    not in a file), so on every load / import it is appended once if — and
    only if — no drill with that name/number is present yet. Re-running is
    a no-op, so it never duplicates. */
-var ADDED_DRILLS=[{name:"ひとりでとっくん単元別　83 3×3方眼上の記憶",total:30}];
+var ADDED_DRILLS=[{name:"ひとりでとっくん単元別　83 3×3方眼上の記憶",total:30},{name:"(新版)ばっちりくんドリル　51. 線対称図形【基礎編】",total:30}];
 function ensureNewDrills(){
   var added=false;
   ADDED_DRILLS.forEach(function(spec){
@@ -314,9 +314,12 @@ function findDrillByName(name){
 for(var i=0;i<S.drills.length;i++)if(S.drills[i].name===name)return S.drills[i];
 var nn=normName(name);
 for(var j=0;j<S.drills.length;j++)if(normName(S.drills[j].name)===nn)return S.drills[j];
-// number + title fuzzy
+// number + title fuzzy — the series must match too: the same number exists
+// in other series (単元別51「重ね点図形」 vs 新版51「線対称図形」), and an
+// unparenthesized "num " prefix match used to return the wrong series'
+// drill, which made ensureNewDrills() skip a genuinely new drill.
 var num=(String(name).match(/(\d{1,3})/)||[])[1];
-if(num){var cands=S.drills.filter(function(d){return seriesOf(d.name)===seriesOf(name)&&String(shortOf(d.name)).indexOf(num+".")===0||String(shortOf(d.name)).indexOf(num+" ")===0});
+if(num){var cands=S.drills.filter(function(d){return seriesOf(d.name)===seriesOf(name)&&(String(shortOf(d.name)).indexOf(num+".")===0||String(shortOf(d.name)).indexOf(num+" ")===0)});
 if(cands.length===1)return cands[0];}
 return null;
 }
@@ -780,7 +783,22 @@ function renderRecord(){
   var bp=$("#backProg");if(bp)bp.onclick=function(){returnToProgress=false;switchTab("progress");setTimeout(function(){window.scrollTo(0,progressScrollY)},50)};
   $("#recDate").onchange=function(e){recDate=e.target.value;pending={};memoEditPage=null;renderRecord()};
   var ddOpen=false;var ddBtn=$("#ddBtn"),ddL=$("#ddList");
-  ddBtn.onclick=function(e){e.stopPropagation();ddOpen=!ddOpen;ddL.style.display=ddOpen?"block":"none"};
+  /* Opening the picker scrolls the list so the currently selected drill is
+     in view (centered when possible). Without this the long grouped list
+     always reopened at the very top, even right after saving a record for
+     a drill far down the list (e.g. 新版51, 単元別83). Rect-based math is
+     used instead of offsetTop so it holds regardless of offset parents. */
+  function scrollDdToSelected(){
+    var sel=ddL.querySelector(".dd-item.sel");if(!sel)return;
+    requestAnimationFrame(function(){
+      if(!ddOpen)return;
+      try{
+        var lr=ddL.getBoundingClientRect(),sr=sel.getBoundingClientRect();
+        ddL.scrollTop+=sr.top-lr.top-(ddL.clientHeight/2)+(sr.height/2);
+      }catch(e){}
+    });
+  }
+  ddBtn.onclick=function(e){e.stopPropagation();ddOpen=!ddOpen;ddL.style.display=ddOpen?"block":"none";if(ddOpen)scrollDdToSelected()};
   document.addEventListener("click",function(){if(ddOpen){ddOpen=false;ddL.style.display="none"}});
   ddL.querySelectorAll("[data-pick]").forEach(function(b){b.onclick=function(e){e.stopPropagation();recDrillId=b.dataset.pick;pending={};memoEditPage=null;renderRecord()}});
   el.querySelectorAll("[data-cell]").forEach(function(c){c.onclick=function(){
@@ -891,6 +909,13 @@ function renderProgress(){
 
 /* ============ REVIEW view ============ */
 var reviewSearch="";var reviewDate=todayStr();
+/* Open state of the "一時ストップ中の教材の復習" fold in the review tab.
+   Kept in a variable (not read back from the DOM) because actions inside
+   the fold — メインに戻す / ストップ側に戻す / 復習した / 日付変更 — call
+   render(), which rebuilds the whole view (including #rvResults) before
+   renderReviewResults() runs, so the old <details> node is already gone
+   and its open flag would be lost on every action. */
+var reviewPausedOpen=false;
 function reviewItems(){
   var items=[];
   S.drills.forEach(function(d){var es=effStatus(d);if(d.status==="終了")return;var m=S.pages[d.id]||{};Object.keys(m).forEach(function(k){var st=m[k];if(st&&st.s==="weak")items.push({drill:d,page:+k,st:st,paused:es==="一時ストップ"&&!st.main,fromPaused:es==="一時ストップ"&&!!st.main})})});
@@ -945,7 +970,7 @@ function renderReviewResults(){
   var box=el.querySelector("#rvResults");
   if(!box)return;
   var det=box.querySelector("details.paused-sec");
-  var wasOpen=!!(det&&det.open);
+  var wasOpen=reviewPausedOpen||!!(det&&det.open);
   var items=reviewItems();
   var pausedAll=items.filter(function(x){return x.paused});
   var q=reviewSearch.trim().toLowerCase();
@@ -995,7 +1020,7 @@ function renderReviewResults(){
   box.querySelectorAll("[data-rvpause]").forEach(function(b){b.onclick=function(){
     var pp=b.dataset.rvpause.split("|");var mm=pageMap(pp[0]);if(mm[pp[1]]){delete mm[pp[1]].main;save();render();toast("一時ストップ側に戻しました")}
   }});
-  box.querySelectorAll("details").forEach(function(dt){dt.addEventListener("toggle",function(){updateFab()})});
+  box.querySelectorAll("details").forEach(function(dt){dt.addEventListener("toggle",function(){if(dt.classList.contains("paused-sec"))reviewPausedOpen=dt.open;updateFab()})});
   updateFab();
 }
 
@@ -1063,7 +1088,7 @@ function renderSave(){
   '<div class="card"><div style="font-weight:800">文字の大きさ</div><p class="small muted">アプリ全体（タブバーも含む）の表示の大きさを切り替えます。設定はこの端末に保存され、次回開いたときもそのまま使えます。</p>'+
   '<div class="rowflex">'+fsBtn("std","標準")+fsBtn("big","大きめ")+fsBtn("xl","特大")+"</div></div>"+
   '<div class="card"><div style="font-weight:800">バックアップ</div><p class="small muted">データはこの端末のブラウザ内（localStorage）にのみ保存され、外部に送信されることはありません。週に1回ほど書き出しをして保管してください。</p>'+
-  '<p class="small muted">ファイルの版：2026-11-26 v20（復習リストに完了済みのページが残る不具合を修正：旧形式バックアップの取り込みで、苦手エントリの done（完了）は「そのエントリの全ページが復習済み」の意味として解釈するよう変更（従来は donePages に載ったページだけを復習済みとみなしていたため、完了済みのページが未復習として復活していた）。取り込み済みの既存データも、読み込み時に一度だけ自動修復する：苦手登録より後の学習ログがあり、その後苦手として再登録されていないページを、復習済み（復習日＝そのログの日付）に直す。単体版で記録したデータの状態は変わらない。あわせて v19 の内容：ログの日別表示で、同じ日・同じ教材の記録が複数のカードに分かれる不具合を修正：記録方法が違っても（記録タブ／復習の「復習した」／「やった・まだ苦手」など）「日付×教材」で1枚のカードにまとめ、全ページをページ番号順に横並び表示。日の集計の「◯冊」は教材数で数え直し。✕の取り消しはまとめたカード内の全ページから選べる。記録ページの「直近の記録」も同日の分を1行にまとめ、日付を固定幅の列にしてページの開始位置が縦にそろうようにした。進捗の並びは全シリーズで番号順に統一し、完了した教材も最後尾に送らず番号の位置に置く（記録の教材プルダウンも同じ）。新教材「ひとりでとっくん単元別 83 3×3方眼上の記憶」（30ページ）を追加：既存データの読み込み時に未登録なら自動で1冊だけ追加され、旧形式バックアップの取り込み時にも含まれる。保存形式は変更なし）</p>'+
+  '<p class="small muted">ファイルの版：2026-11-28 v21（新教材「(新版)ばっちりくんドリル 51. 線対称図形【基礎編】」（30ページ・未着手）を追加：既存データの読み込み時に未登録なら自動で1冊だけ追加され、旧形式バックアップの取り込み時にも含まれる。同じ番号の別シリーズ教材（単元別51「重ね点図形」）とは区別して判定する。復習タブの「一時ストップ中の教材の復習」は、開いた状態で「メインに戻す」などを押しても再描画で閉じないよう開閉状態を保持。記録タブの教材プルダウンは、開いたときに選択中の教材が見える位置までスクロールして開くよう変更。あわせて v20 の内容：復習リストに完了済みのページが残る不具合を修正：旧形式バックアップの取り込みで、苦手エントリの done（完了）は「そのエントリの全ページが復習済み」の意味として解釈するよう変更（従来は donePages に載ったページだけを復習済みとみなしていたため、完了済みのページが未復習として復活していた）。取り込み済みの既存データも、読み込み時に一度だけ自動修復する：苦手登録より後の学習ログがあり、その後苦手として再登録されていないページを、復習済み（復習日＝そのログの日付）に直す。単体版で記録したデータの状態は変わらない。あわせて v19 の内容：ログの日別表示で、同じ日・同じ教材の記録が複数のカードに分かれる不具合を修正：記録方法が違っても（記録タブ／復習の「復習した」／「やった・まだ苦手」など）「日付×教材」で1枚のカードにまとめ、全ページをページ番号順に横並び表示。日の集計の「◯冊」は教材数で数え直し。✕の取り消しはまとめたカード内の全ページから選べる。記録ページの「直近の記録」も同日の分を1行にまとめ、日付を固定幅の列にしてページの開始位置が縦にそろうようにした。進捗の並びは全シリーズで番号順に統一し、完了した教材も最後尾に送らず番号の位置に置く（記録の教材プルダウンも同じ）。新教材「ひとりでとっくん単元別 83 3×3方眼上の記憶」（30ページ）を追加：既存データの読み込み時に未登録なら自動で1冊だけ追加され、旧形式バックアップの取り込み時にも含まれる。保存形式は変更なし）</p>'+
   '<button class="btn" id="svExport" style="width:100%">JSONを書き出す（ダウンロード）</button>'+
   '<button class="btn subbtn" id="svHtml" style="width:100%;margin-top:8px">単体HTMLを書き出す（muse-drill-tracker.html）</button>'+
   '<label class="flabel">バックアップを読み込む（旧GitHub版の形式にも対応）</label><input type="file" id="svImport" accept=".json,application/json"></div>'+
